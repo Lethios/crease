@@ -24,12 +24,25 @@ impl<'a> Parser<'a> {
     }
 
     pub fn factor(&mut self) -> f64 {
-        if let Number(n) = self.curr_token.kind {
-            self.consume();
-            return n;
+        let res;
+        let token = self.consume();
+
+        match token.kind {
+            Number(n) => {
+                res = n;
+            }
+            LParen => {
+                res = self.expr();
+                let rparen = self.consume();
+
+                if rparen.kind != RParen {
+                    panic!("expected ')'");
+                }
+            }
+            _ => panic!("unexpected token"),
         }
 
-        panic!("expected integer");
+        res
     }
 
     pub fn term(&mut self) -> f64 {
@@ -50,6 +63,11 @@ impl<'a> Parser<'a> {
     }
 
     pub fn expr(&mut self) -> f64 {
+        /*
+         * expr = term ((Add | Sub) term)*
+         * term = factor ((Mul | Div) factor)*
+         * factor = Number | LParen expr RParen
+         */
         let mut res = self.term();
 
         while self.curr_token.kind == Add || self.curr_token.kind == Sub {

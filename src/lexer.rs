@@ -42,6 +42,9 @@ impl<'a> Lexer<'a> {
                 };
             }
 
+            b'(' => return Token { kind: LParen },
+            b')' => return Token { kind: RParen },
+
             b'+' => return Token { kind: Add },
             b'-' => return Token { kind: Sub },
             b'*' => return Token { kind: Mul },

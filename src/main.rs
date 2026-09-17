@@ -1,20 +1,17 @@
 use crate::lexer::*;
+use crate::parser::*;
 use crate::token::*;
 
 pub mod lexer;
+pub mod parser;
 pub mod token;
 
 fn main() {
-    let src = " 34+2+-40+20";
-    let mut lexer = Lexer::new(src);
+    let src = "14 + 2 * 3 - 6 / 2";
 
-    loop {
-        let token = lexer.next_token();
+    let lexer = Lexer::new(src);
+    let mut parser = Parser::new(lexer);
 
-        if token.kind == TokenKind::EOF {
-            break;
-        }
-
-        println!("{:?}", token);
-    }
+    let result = parser.expr();
+    println!("{src} = {result}");
 }

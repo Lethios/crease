@@ -1,8 +1,4 @@
-use crate::{
-    Token,
-    TokenKind::{EOF, Integer, Plus},
-    token::TokenKind::Minus,
-};
+use crate::token::{Token, TokenKind::*};
 
 pub struct Lexer<'a> {
     pub input: &'a [u8],
@@ -39,15 +35,17 @@ impl<'a> Lexer<'a> {
                 let end = self.idx - 1;
 
                 let temp = str::from_utf8(&self.input[start..=end]).unwrap();
-                let digit = temp.parse::<i32>().unwrap();
+                let digit = temp.parse::<f64>().unwrap();
 
                 return Token {
-                    kind: Integer(digit),
+                    kind: Number(digit),
                 };
             }
 
-            b'+' => return Token { kind: Plus },
-            b'-' => return Token { kind: Minus },
+            b'+' => return Token { kind: Add },
+            b'-' => return Token { kind: Sub },
+            b'*' => return Token { kind: Mul },
+            b'/' => return Token { kind: Div },
 
             _ => panic!("Unidentified token"),
         }

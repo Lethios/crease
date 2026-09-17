@@ -1,12 +1,14 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenKind {
-    Integer(i32),
-    Plus,
-    Minus,
+    Number(f64),
+    Add,
+    Sub,
+    Mul,
+    Div,
     EOF,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
 }

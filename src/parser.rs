@@ -63,11 +63,6 @@ impl<'a> Parser<'a> {
     }
 
     pub fn expr(&mut self) -> f64 {
-        /*
-         * expr = term ((Add | Sub) term)*
-         * term = factor ((Mul | Div) factor)*
-         * factor = Number | LParen expr RParen
-         */
         let mut res = self.term();
 
         while self.curr_token.kind == Add || self.curr_token.kind == Sub {

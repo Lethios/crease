@@ -1,4 +1,5 @@
-use crate::{Lexer, Token, TokenKind::*};
+use crate::lexer::Lexer;
+use crate::token::{Token, TokenKind::*};
 
 pub struct Parser<'a> {
     pub lexer: Lexer<'a>,

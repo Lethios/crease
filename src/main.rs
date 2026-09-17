@@ -1,10 +1,5 @@
-use crate::lexer::*;
-use crate::parser::*;
-use crate::token::*;
-
-pub mod lexer;
-pub mod parser;
-pub mod token;
+use crease::lexer::Lexer;
+use crease::parser::Parser;
 
 fn main() {
     let src = "14 + 2 * 3 - 6 / 2";

@@ -64,6 +64,13 @@ impl<'a> Parser<'a> {
 
                 Ok(res)
             }
+            Add => {
+                let res = ast::UnaryOperation {
+                    operator: UnaryOperators::Add,
+                    operand: Box::new(self.factor()?),
+                };
+                Ok(Expression::UnaryOperation(res))
+            }
             Sub => {
                 let res = ast::UnaryOperation {
                     operator: UnaryOperators::Sub,

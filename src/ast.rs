@@ -3,6 +3,7 @@ pub struct Number(pub f64);
 
 #[derive(Debug)]
 pub enum UnaryOperators {
+    Add,
     Sub,
 }
 

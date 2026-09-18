@@ -30,10 +30,21 @@ impl<'a> Lexer<'a> {
         match char {
             b'0'..=b'9' => {
                 let start = self.idx - 1;
+                let mut seen_decimal = false;
 
                 while let Some(d) = self.peek() {
                     if d.is_ascii_digit() {
                         self.consume();
+                    } else if d == b'.' {
+                        self.consume();
+                        if !seen_decimal {
+                            seen_decimal = true;
+                        } else {
+                            return Err(LexerError {
+                                kind: UnidentifiedCharacter,
+                                span: (self.idx, self.idx),
+                            });
+                        }
                     } else {
                         break;
                     }

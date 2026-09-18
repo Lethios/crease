@@ -39,6 +39,9 @@ impl<'a> Parser<'a> {
                     panic!("expected ')'");
                 }
             }
+            Sub => {
+                res = -self.factor();
+            }
             _ => panic!("unexpected token"),
         }
 

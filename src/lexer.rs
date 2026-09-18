@@ -1,4 +1,7 @@
-use crate::token::{Token, TokenKind::*};
+use crate::{
+    error::{LexerError, LexerErrorKind::UnidentifiedCharacter},
+    token::{Token, TokenKind::*},
+};
 
 pub struct Lexer<'a> {
     pub input: &'a [u8],
@@ -13,12 +16,15 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    pub fn next_token(&mut self) -> Token {
+    pub fn next_token(&mut self) -> Result<Token, LexerError> {
         self.skip_whitespace();
         let char = self.consume();
 
         let Some(char) = char else {
-            return Token { kind: EOF };
+            return Ok(Token {
+                kind: EOF,
+                span: (self.idx, self.idx),
+            });
         };
 
         match char {
@@ -37,20 +43,54 @@ impl<'a> Lexer<'a> {
                 let temp = str::from_utf8(&self.input[start..=end]).unwrap();
                 let digit = temp.parse::<f64>().unwrap();
 
-                return Token {
+                return Ok(Token {
                     kind: Number(digit),
-                };
+                    span: (start, end),
+                });
             }
 
-            b'(' => return Token { kind: LParen },
-            b')' => return Token { kind: RParen },
+            b'(' => {
+                return Ok(Token {
+                    kind: LParen,
+                    span: (self.idx, self.idx),
+                });
+            }
+            b')' => {
+                return Ok(Token {
+                    kind: RParen,
+                    span: (self.idx, self.idx),
+                });
+            }
 
-            b'+' => return Token { kind: Add },
-            b'-' => return Token { kind: Sub },
-            b'*' => return Token { kind: Mul },
-            b'/' => return Token { kind: Div },
+            b'+' => {
+                return Ok(Token {
+                    kind: Add,
+                    span: (self.idx, self.idx),
+                });
+            }
+            b'-' => {
+                return Ok(Token {
+                    kind: Sub,
+                    span: (self.idx, self.idx),
+                });
+            }
+            b'*' => {
+                return Ok(Token {
+                    kind: Mul,
+                    span: (self.idx, self.idx),
+                });
+            }
+            b'/' => {
+                return Ok(Token {
+                    kind: Div,
+                    span: (self.idx, self.idx),
+                });
+            }
 
-            _ => panic!("Unidentified token"),
+            _ => Err(LexerError {
+                kind: UnidentifiedCharacter,
+                span: (self.idx, self.idx),
+            }),
         }
     }
 

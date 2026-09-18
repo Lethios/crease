@@ -13,10 +13,11 @@ pub enum TokenKind {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
+    pub span: (usize, usize),
 }
 
 impl Token {
-    pub fn new(kind: TokenKind) -> Self {
-        Token { kind }
+    pub fn new(kind: TokenKind, span: (usize, usize)) -> Self {
+        Token { kind, span }
     }
 }

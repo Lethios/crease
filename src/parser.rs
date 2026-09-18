@@ -49,7 +49,7 @@ impl<'a> Parser<'a> {
         match token.kind {
             Number(n) => {
                 let res = ast::Number(n);
-                return Ok(Expression::Number(res));
+                Ok(Expression::Number(res))
             }
             LParen => {
                 let res = self.expr()?;
@@ -62,14 +62,14 @@ impl<'a> Parser<'a> {
                     }));
                 }
 
-                return Ok(res);
+                Ok(res)
             }
             Sub => {
                 let res = ast::UnaryOperation {
                     operator: UnaryOperators::Sub,
                     operand: Box::new(self.factor()?),
                 };
-                return Ok(Expression::UnaryOperation(res));
+                Ok(Expression::UnaryOperation(res))
             }
             _ => Err(Error::Parse(ParserError {
                 kind: UnidentifiedToken,

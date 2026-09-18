@@ -43,49 +43,37 @@ impl<'a> Lexer<'a> {
                 let temp = str::from_utf8(&self.input[start..=end]).unwrap();
                 let digit = temp.parse::<f64>().unwrap();
 
-                return Ok(Token {
+                Ok(Token {
                     kind: Number(digit),
                     span: (start, end),
-                });
+                })
             }
 
-            b'(' => {
-                return Ok(Token {
-                    kind: LParen,
-                    span: (self.idx, self.idx),
-                });
-            }
-            b')' => {
-                return Ok(Token {
-                    kind: RParen,
-                    span: (self.idx, self.idx),
-                });
-            }
+            b'(' => Ok(Token {
+                kind: LParen,
+                span: (self.idx, self.idx),
+            }),
+            b')' => Ok(Token {
+                kind: RParen,
+                span: (self.idx, self.idx),
+            }),
 
-            b'+' => {
-                return Ok(Token {
-                    kind: Add,
-                    span: (self.idx, self.idx),
-                });
-            }
-            b'-' => {
-                return Ok(Token {
-                    kind: Sub,
-                    span: (self.idx, self.idx),
-                });
-            }
-            b'*' => {
-                return Ok(Token {
-                    kind: Mul,
-                    span: (self.idx, self.idx),
-                });
-            }
-            b'/' => {
-                return Ok(Token {
-                    kind: Div,
-                    span: (self.idx, self.idx),
-                });
-            }
+            b'+' => Ok(Token {
+                kind: Add,
+                span: (self.idx, self.idx),
+            }),
+            b'-' => Ok(Token {
+                kind: Sub,
+                span: (self.idx, self.idx),
+            }),
+            b'*' => Ok(Token {
+                kind: Mul,
+                span: (self.idx, self.idx),
+            }),
+            b'/' => Ok(Token {
+                kind: Div,
+                span: (self.idx, self.idx),
+            }),
 
             _ => Err(LexerError {
                 kind: UnidentifiedCharacter,

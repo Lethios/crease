@@ -8,5 +8,5 @@ fn main() {
     let mut parser = Parser::new(lexer);
 
     let result = parser.expr();
-    println!("{src} = {result}");
+    println!("{src} = {:?}", result);
 }

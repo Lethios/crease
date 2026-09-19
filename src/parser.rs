@@ -27,10 +27,7 @@ impl<'a> Parser<'a> {
         let res = self.expr()?;
 
         if self.curr_token.kind != EOF {
-            return Err(Error::Parse(ParserError {
-                kind: UnidentifiedToken,
-                span: self.curr_token.span,
-            }));
+            return Err(ParserError::new(UnidentifiedToken, self.curr_token.span).into());
         }
 
         Ok(res)
@@ -56,10 +53,7 @@ impl<'a> Parser<'a> {
 
                 let rparen = self.consume()?;
                 if rparen.kind != RParen {
-                    return Err(Error::Parse(ParserError {
-                        kind: MissingDelimiter,
-                        span: rparen.span,
-                    }));
+                    return Err(ParserError::new(MissingDelimiter, rparen.span).into());
                 }
 
                 Ok(res)
@@ -78,10 +72,7 @@ impl<'a> Parser<'a> {
                 };
                 Ok(Expression::UnaryOperation(res))
             }
-            _ => Err(Error::Parse(ParserError {
-                kind: UnidentifiedToken,
-                span: token.span,
-            })),
+            _ => Err(ParserError::new(UnidentifiedToken, token.span).into()),
         }
     }
 
@@ -110,10 +101,7 @@ impl<'a> Parser<'a> {
                     lhs = Expression::BinaryOperation(res);
                 }
                 _ => {
-                    return Err(Error::Parse(ParserError {
-                        kind: UnidentifiedToken,
-                        span: operator.span,
-                    }));
+                    return Err(ParserError::new(UnidentifiedToken, operator.span).into());
                 }
             }
         }
@@ -146,10 +134,7 @@ impl<'a> Parser<'a> {
                     lhs = Expression::BinaryOperation(res);
                 }
                 _ => {
-                    return Err(Error::Parse(ParserError {
-                        kind: UnidentifiedToken,
-                        span: operator.span,
-                    }));
+                    return Err(ParserError::new(UnidentifiedToken, operator.span).into());
                 }
             }
         }

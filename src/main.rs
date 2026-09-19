@@ -11,7 +11,7 @@ fn main() {
         let mut parser = Parser::new(lexer)?;
         let ast = parser.parse()?;
         let interpreter = Interpreter::new();
-        let res = interpreter.interpret(&ast)?;
+        let res = interpreter.interpret(&ast);
 
         Ok(res)
     };

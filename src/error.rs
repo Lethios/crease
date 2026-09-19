@@ -38,6 +38,12 @@ pub struct LexerError {
     pub span: (usize, usize),
 }
 
+impl LexerError {
+    pub fn new(kind: LexerErrorKind, span: (usize, usize)) -> Self {
+        Self { kind, span }
+    }
+}
+
 impl fmt::Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
@@ -58,6 +64,12 @@ pub enum ParserErrorKind {
 pub struct ParserError {
     pub kind: ParserErrorKind,
     pub span: (usize, usize),
+}
+
+impl ParserError {
+    pub fn new(kind: ParserErrorKind, span: (usize, usize)) -> Self {
+        Self { kind, span }
+    }
 }
 
 impl fmt::Display for ParserError {

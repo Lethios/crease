@@ -1,4 +1,4 @@
-# crease (WIP)
+# crease (WIP Language)
 
 ### Current Grammar (EBNF)
 ```ebnf

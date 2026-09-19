@@ -1,6 +1,9 @@
 use crate::{
     error::{LexerError, LexerErrorKind::UnidentifiedCharacter},
-    token::{Token, TokenKind::*},
+    token::{
+        Token,
+        TokenKind::{self, *},
+    },
 };
 
 pub struct Lexer<'a> {
@@ -40,10 +43,10 @@ impl<'a> Lexer<'a> {
                         if !seen_decimal {
                             seen_decimal = true;
                         } else {
-                            return Err(LexerError {
-                                kind: UnidentifiedCharacter,
-                                span: (self.idx, self.idx),
-                            });
+                            return Err(LexerError::new(
+                                UnidentifiedCharacter,
+                                (self.idx, self.idx),
+                            ));
                         }
                     } else {
                         break;
@@ -60,36 +63,15 @@ impl<'a> Lexer<'a> {
                 })
             }
 
-            b'(' => Ok(Token {
-                kind: LParen,
-                span: (self.idx, self.idx),
-            }),
-            b')' => Ok(Token {
-                kind: RParen,
-                span: (self.idx, self.idx),
-            }),
+            b'(' => Ok(self.construct_token(LParen)),
+            b')' => Ok(self.construct_token(RParen)),
 
-            b'+' => Ok(Token {
-                kind: Add,
-                span: (self.idx, self.idx),
-            }),
-            b'-' => Ok(Token {
-                kind: Sub,
-                span: (self.idx, self.idx),
-            }),
-            b'*' => Ok(Token {
-                kind: Mul,
-                span: (self.idx, self.idx),
-            }),
-            b'/' => Ok(Token {
-                kind: Div,
-                span: (self.idx, self.idx),
-            }),
+            b'+' => Ok(self.construct_token(Add)),
+            b'-' => Ok(self.construct_token(Sub)),
+            b'*' => Ok(self.construct_token(Mul)),
+            b'/' => Ok(self.construct_token(Div)),
 
-            _ => Err(LexerError {
-                kind: UnidentifiedCharacter,
-                span: (self.idx, self.idx),
-            }),
+            _ => Err(LexerError::new(UnidentifiedCharacter, (self.idx, self.idx))),
         }
     }
 
@@ -113,6 +95,13 @@ impl<'a> Lexer<'a> {
             } else {
                 break;
             }
+        }
+    }
+
+    fn construct_token(&self, kind: TokenKind) -> Token {
+        Token {
+            kind,
+            span: (self.idx, self.idx),
         }
     }
 }

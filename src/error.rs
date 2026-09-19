@@ -4,6 +4,7 @@ use std::fmt;
 pub enum Error {
     Lex(LexerError),
     Parse(ParserError),
+    Runtime(RuntimeError),
 }
 
 impl fmt::Display for Error {
@@ -11,6 +12,7 @@ impl fmt::Display for Error {
         match self {
             Error::Lex(l) => write!(f, "Lexer error at column {}: {}", l.span.0, l),
             Error::Parse(p) => write!(f, "Parser error at column {}: {}", p.span.0, p),
+            Error::Runtime(r) => write!(f, "Runtime error: {}", r),
         }
     }
 }
@@ -24,6 +26,12 @@ impl From<LexerError> for Error {
 impl From<ParserError> for Error {
     fn from(value: ParserError) -> Self {
         Error::Parse(value)
+    }
+}
+
+impl From<RuntimeError> for Error {
+    fn from(value: RuntimeError) -> Self {
+        Error::Runtime(value)
     }
 }
 
@@ -88,3 +96,27 @@ impl fmt::Display for ParserError {
 }
 
 impl std::error::Error for ParserError {}
+
+#[derive(Debug, Clone, Copy)]
+pub enum RuntimeErrorKind {
+    UndefinedVariable,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RuntimeError {
+    pub kind: RuntimeErrorKind,
+}
+
+impl RuntimeError {
+    pub fn new(kind: RuntimeErrorKind) -> Self {
+        Self { kind }
+    }
+}
+
+impl fmt::Display for RuntimeError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self.kind {
+            RuntimeErrorKind::UndefinedVariable => write!(f, "undefine variable"),
+        }
+    }
+}

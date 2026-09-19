@@ -63,17 +63,8 @@ impl<'a> Lexer<'a> {
                 })
             }
 
-            b's' => {
-                if self.input[self.idx] == b'e' && self.input[self.idx + 1] == b't' {
-                    self.consume();
-                    self.consume();
-                    return Ok(self.construct_token(Set));
-                }
-
-                Err(LexerError::new(UnidentifiedCharacter, (self.idx, self.idx)))
-            }
-
             b'=' => Ok(self.construct_token(Equals)),
+            b';' => Ok(self.construct_token(Semicolon)),
 
             b'>' => {
                 if self.input[self.idx] == b'>' {
@@ -107,8 +98,10 @@ impl<'a> Lexer<'a> {
 
                 let temp = str::from_utf8(&self.input[start..=end]).unwrap();
                 let s = temp.parse::<String>().unwrap();
+
+                let kind = if s == "set" { Set } else { Identifier(s) };
                 Ok(Token {
-                    kind: Identifier(s),
+                    kind,
                     span: (start, end),
                 })
             }

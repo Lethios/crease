@@ -29,7 +29,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Statement, Error> {
+    pub fn parse(&mut self) -> Result<Vec<Statement>, Error> {
         self.program()
     }
 
@@ -39,14 +39,14 @@ impl<'a> Parser<'a> {
         Ok(prev)
     }
 
-    fn program(&mut self) -> Result<Statement, Error> {
-        let res = self.statement()?;
+    fn program(&mut self) -> Result<Vec<Statement>, Error> {
+        let mut statements = Vec::new();
 
-        if self.curr_token.kind != EOF {
-            return Err(ParserError::new(UnidentifiedToken, self.curr_token.span).into());
+        while self.curr_token.kind != EOF {
+            statements.push(self.statement()?);
         }
 
-        Ok(res)
+        Ok(statements)
     }
 
     fn statement(&mut self) -> Result<Statement, Error> {
@@ -61,6 +61,7 @@ impl<'a> Parser<'a> {
         if self.curr_token.kind != TokenKind::Semicolon {
             return Err(ParserError::new(MissingSemicolon, self.curr_token.span).into());
         }
+        self.consume()?;
 
         Ok(res)
     }
@@ -168,6 +169,10 @@ impl<'a> Parser<'a> {
             Number(n) => {
                 let res = ast::Number(n);
                 Ok(Expression::Number(res))
+            }
+            Identifier(i) => {
+                let res = ast::Identifier(i);
+                Ok(Expression::Identifier(res))
             }
             LParen => {
                 let res = self.expr()?;

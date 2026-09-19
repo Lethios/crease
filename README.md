@@ -4,9 +4,11 @@
 ```ebnf
 program    = { statement };
 statement  = (assignment | print) SEMICOLON;
-assignment = "var" IDENTIFIER "=" expr;
+assignment = "set" IDENTIFIER "=" expr;
 print      = ">>" expr;
 expr       = term { ("+" | "-") term };
 term       = factor { ("*" | "/") factor };
 factor     = NUMBER | IDENTIFIER | "(" expr ")" | ("+" | "-") factor;
 ```
+
+- TODO: Fix error col marker, add line numbers and additional data, standardize var names, code cleanup.

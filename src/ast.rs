@@ -34,6 +34,7 @@ pub struct BinaryOperation {
 #[derive(Debug)]
 pub enum Expression {
     Number(Number),
+    Identifier(Identifier),
     UnaryOperation(UnaryOperation),
     BinaryOperation(BinaryOperation),
 }

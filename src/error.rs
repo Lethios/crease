@@ -116,7 +116,7 @@ impl RuntimeError {
 impl fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
-            RuntimeErrorKind::UndefinedVariable => write!(f, "undefine variable"),
+            RuntimeErrorKind::UndefinedVariable => write!(f, "undefined variable"),
         }
     }
 }

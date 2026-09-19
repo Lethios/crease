@@ -4,5 +4,5 @@
 ```ebnf
 expr   = term { ("+" | "-") term };
 term   = factor { ("*" | "/") factor };
-factor = NUMBER | "(" expr ")" | "-" factor;
+factor = NUMBER | "(" expr ")" | ("+" | "-") factor;
 ```

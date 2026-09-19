@@ -63,6 +63,27 @@ impl<'a> Lexer<'a> {
                 })
             }
 
+            b's' => {
+                if self.input[self.idx] == b'e' && self.input[self.idx + 1] == b't' {
+                    self.consume();
+                    self.consume();
+                    return Ok(self.construct_token(Set));
+                }
+
+                Err(LexerError::new(UnidentifiedCharacter, (self.idx, self.idx)))
+            }
+
+            b'=' => Ok(self.construct_token(Equals)),
+
+            b'>' => {
+                if self.input[self.idx] == b'>' {
+                    self.consume();
+                    return Ok(self.construct_token(Print));
+                }
+
+                Err(LexerError::new(UnidentifiedCharacter, (self.idx, self.idx)))
+            }
+
             b'(' => Ok(self.construct_token(LParen)),
             b')' => Ok(self.construct_token(RParen)),
 
@@ -70,6 +91,27 @@ impl<'a> Lexer<'a> {
             b'-' => Ok(self.construct_token(Sub)),
             b'*' => Ok(self.construct_token(Mul)),
             b'/' => Ok(self.construct_token(Div)),
+
+            b'a'..=b'z' | b'A'..=b'Z' | b'_' => {
+                let start = self.idx - 1;
+
+                while let Some(char) = self.peek() {
+                    if char.is_ascii_alphanumeric() || char == b'_' {
+                        self.consume();
+                    } else {
+                        break;
+                    }
+                }
+
+                let end = self.idx - 1;
+
+                let temp = str::from_utf8(&self.input[start..=end]).unwrap();
+                let s = temp.parse::<String>().unwrap();
+                Ok(Token {
+                    kind: Identifier(s),
+                    span: (start, end),
+                })
+            }
 
             _ => Err(LexerError::new(UnidentifiedCharacter, (self.idx, self.idx))),
         }

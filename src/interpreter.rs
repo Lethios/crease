@@ -1,4 +1,4 @@
-use crate::ast::{BinaryOperators, Expression, UnaryOperators};
+use crate::ast::{BinaryOperators, Expression, Statement, UnaryOperators};
 
 pub struct Interpreter;
 
@@ -7,27 +7,29 @@ impl Interpreter {
         Interpreter
     }
 
-    pub fn interpret(&self, expr: &Expression) -> f64 {
+    fn statement(&self, stmt: &Statement) {}
+
+    fn expression(&self, expr: &Expression) -> f64 {
         match expr {
             Expression::Number(num) => num.0,
 
             Expression::UnaryOperation(unary) => match unary.operator {
-                UnaryOperators::Add => self.interpret(&unary.operand),
-                UnaryOperators::Sub => -self.interpret(&unary.operand),
+                UnaryOperators::Add => self.expression(&unary.operand),
+                UnaryOperators::Sub => -self.expression(&unary.operand),
             },
 
             Expression::BinaryOperation(binary) => match binary.operator {
                 BinaryOperators::Add => {
-                    self.interpret(&binary.left) + self.interpret(&binary.right)
+                    self.expression(&binary.left) + self.expression(&binary.right)
                 }
                 BinaryOperators::Sub => {
-                    self.interpret(&binary.left) - self.interpret(&binary.right)
+                    self.expression(&binary.left) - self.expression(&binary.right)
                 }
                 BinaryOperators::Mul => {
-                    self.interpret(&binary.left) * self.interpret(&binary.right)
+                    self.expression(&binary.left) * self.expression(&binary.right)
                 }
                 BinaryOperators::Div => {
-                    self.interpret(&binary.left) / self.interpret(&binary.right)
+                    self.expression(&binary.left) / self.expression(&binary.right)
                 }
             },
         }

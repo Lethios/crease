@@ -2,6 +2,9 @@
 pub struct Number(pub f64);
 
 #[derive(Debug)]
+pub struct Identifier(pub String);
+
+#[derive(Debug)]
 pub enum UnaryOperators {
     Add,
     Sub,
@@ -33,4 +36,19 @@ pub enum Expression {
     Number(Number),
     UnaryOperation(UnaryOperation),
     BinaryOperation(BinaryOperation),
+}
+
+#[derive(Debug)]
+pub struct Assignment {
+    pub iden: Identifier,
+    pub expr: Expression,
+}
+
+#[derive(Debug)]
+pub struct Print(pub Expression);
+
+#[derive(Debug)]
+pub enum Statement {
+    Assignment(Assignment),
+    Print(Print),
 }

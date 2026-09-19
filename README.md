@@ -2,7 +2,11 @@
 
 ### Current Grammar (EBNF)
 ```ebnf
-expr   = term { ("+" | "-") term };
-term   = factor { ("*" | "/") factor };
-factor = NUMBER | "(" expr ")" | ("+" | "-") factor;
+program    = { statement };
+statement  = (assignment | print) SEMICOLON;
+assignment = "var" IDENTIFIER "=" expr;
+print      = ">>" expr;
+expr       = term { ("+" | "-") term };
+term       = factor { ("*" | "/") factor };
+factor     = NUMBER | IDENTIFIER | "(" expr ")" | ("+" | "-") factor;
 ```

@@ -58,6 +58,9 @@ impl std::error::Error for LexerError {}
 pub enum ParserErrorKind {
     MissingDelimiter,
     UnidentifiedToken,
+    ExpectedStatement,
+    UnexpectedToken,
+    MissingSemicolon,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -77,6 +80,9 @@ impl fmt::Display for ParserError {
         match self.kind {
             ParserErrorKind::MissingDelimiter => write!(f, "missing delimiter"),
             ParserErrorKind::UnidentifiedToken => write!(f, "unidentified token"),
+            ParserErrorKind::ExpectedStatement => write!(f, "expected statement"),
+            ParserErrorKind::UnexpectedToken => write!(f, "unexpected token"),
+            ParserErrorKind::MissingSemicolon => write!(f, "unexpected token"),
         }
     }
 }

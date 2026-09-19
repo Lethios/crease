@@ -9,8 +9,8 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Lex(_) => write!(f, "Lexer Error"),
-            Error::Parse(_) => write!(f, "Parser Error"),
+            Error::Lex(l) => write!(f, "Lexer error at column {}: {}", l.span.0, l),
+            Error::Parse(p) => write!(f, "Parser error at column {}: {}", p.span.0, p),
         }
     }
 }

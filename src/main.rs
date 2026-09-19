@@ -3,17 +3,23 @@ use crease::interpreter::Interpreter;
 use crease::lexer::Lexer;
 use crease::parser::Parser;
 
-fn main() -> Result<(), Error> {
-    let src = "(2 * (6 - (2 + 2))";
+fn main() {
+    let src = "2 + *";
     let lexer = Lexer::new(src);
 
-    let mut parser = Parser::new(lexer)?;
-    let ast = parser.parse()?;
+    let result = || -> Result<f64, Error> {
+        let mut parser = Parser::new(lexer)?;
+        let ast = parser.parse()?;
+        let interpreter = Interpreter::new();
+        let res = interpreter.interpret(&ast)?;
 
-    let interpreter = Interpreter::new();
-    let res = interpreter.interpret(&ast);
+        Ok(res)
+    };
 
-    println!("{src} = {}", res);
+    let res = result();
 
-    Ok(())
+    match res {
+        Ok(res) => println!("{src} = {res}"),
+        Err(e) => eprintln!("{e}"),
+    }
 }

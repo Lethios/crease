@@ -5,6 +5,7 @@ use crate::{
     error::{Error, RuntimeError, RuntimeErrorKind::UndefinedVariable},
 };
 
+#[derive(Default, Debug)]
 pub struct Interpreter {
     variables: HashMap<String, f64>,
 }

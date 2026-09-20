@@ -60,11 +60,9 @@ impl<'a> Parser<'a> {
     }
 
     fn statement(&mut self) -> Result<Statement, Error> {
-        let res;
-
-        match self.curr_token.kind {
-            TokenKind::Set => res = self.assignment()?,
-            TokenKind::Out => res = self.print()?,
+        let res = match self.curr_token.kind {
+            TokenKind::Set => self.assignment()?,
+            TokenKind::Out => self.print()?,
             _ => {
                 return Err(ParserError::new(
                     ExpectedStatement,
@@ -73,13 +71,13 @@ impl<'a> Parser<'a> {
                 )
                 .into());
             }
-        }
+        };
 
         if self.curr_token.kind != TokenKind::Semicolon {
             return Err(ParserError::new(
                 MissingSemicolon,
                 self.curr_token.line,
-                self.curr_token.column - 1,
+                self.curr_token.column,
             )
             .into());
         }
@@ -242,7 +240,7 @@ impl<'a> Parser<'a> {
                 };
                 Ok(Expression::UnaryOperation(res))
             }
-            _ => Err(ParserError::new(UnidentifiedToken, token.column, token.column).into()),
+            _ => Err(ParserError::new(UnidentifiedToken, token.line, token.column).into()),
         }
     }
 }

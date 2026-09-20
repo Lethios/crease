@@ -5,7 +5,7 @@ use crease::parser::Parser;
 
 fn main() {
     let src = r#"
-out (1 + 2;
+out 1 + 2.;
 "#;
 
     let result = || -> Result<(), Error> {

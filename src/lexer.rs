@@ -63,8 +63,8 @@ impl<'a> Lexer<'a> {
                 }
                 let end = self.idx - 1;
 
-                if self.input[end] == b'.' {
-                    // flag number ending with .
+                if self.input.get(end) == Some(&b'.') {
+                    // reject number ending with .
                     return Err(LexerError::new(InvalidNumber, start_line, start_col));
                 }
 

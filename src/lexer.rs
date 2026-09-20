@@ -27,100 +27,116 @@ impl<'a> Lexer<'a> {
     }
 
     pub fn next_token(&mut self) -> Result<Token, LexerError> {
-        self.skip_whitespace();
+        loop {
+            self.skip_whitespace();
 
-        let start_line = self.line;
-        let start_col = self.column;
+            let start_line = self.line;
+            let start_col = self.column;
 
-        let char = self.consume();
+            let char = self.consume();
 
-        let Some(char) = char else {
-            return Ok(self.construct_token(EOF, start_line, start_col));
-        };
+            let Some(char) = char else {
+                return Ok(self.construct_token(EOF, start_line, start_col));
+            };
 
-        match char {
-            b'0'..=b'9' => {
-                let start = self.idx - 1;
-                let mut seen_decimal = false;
+            match char {
+                b'0'..=b'9' => {
+                    let start = self.idx - 1;
+                    let mut seen_decimal = false;
 
-                while let Some(d) = self.peek() {
-                    if d.is_ascii_digit() {
-                        self.consume();
-                    } else if d == b'.' {
-                        if seen_decimal {
-                            // flag double decimal point 0..
-                            return Err(LexerError::new(
-                                UnexpectedCharacter,
-                                self.line,
-                                self.column,
-                            ));
+                    while let Some(d) = self.peek() {
+                        if d.is_ascii_digit() {
+                            self.consume();
+                        } else if d == b'.' {
+                            if seen_decimal {
+                                // flag double decimal point 0..
+                                return Err(LexerError::new(
+                                    UnexpectedCharacter,
+                                    self.line,
+                                    self.column,
+                                ));
+                            }
+                            self.consume();
+                            seen_decimal = true;
+                        } else {
+                            break;
                         }
-                        self.consume();
-                        seen_decimal = true;
-                    } else {
-                        break;
                     }
-                }
-                let end = self.idx - 1;
+                    let end = self.idx - 1;
 
-                if self.input.get(end) == Some(&b'.') {
-                    // reject number ending with .
-                    return Err(LexerError::new(InvalidNumber, start_line, start_col));
-                }
-
-                let temp = str::from_utf8(&self.input[start..=end]).unwrap();
-                let num = temp.parse::<f64>().unwrap();
-
-                Ok(self.construct_token(Number(num), start_line, start_col))
-            }
-
-            b'=' => Ok(self.construct_token(Equals, start_line, start_col)),
-            b';' => Ok(self.construct_token(Semicolon, start_line, start_col)),
-
-            b'(' => Ok(self.construct_token(LParen, start_line, start_col)),
-            b')' => Ok(self.construct_token(RParen, start_line, start_col)),
-
-            b'+' => Ok(self.construct_token(Add, start_line, start_col)),
-            b'-' => Ok(self.construct_token(Sub, start_line, start_col)),
-            b'*' => Ok(self.construct_token(Mul, start_line, start_col)),
-            b'/' => Ok(self.construct_token(Div, start_line, start_col)),
-
-            b'a'..=b'z' | b'A'..=b'Z' | b'_' => {
-                let start = self.idx - 1;
-
-                while let Some(char) = self.peek() {
-                    if char.is_ascii_alphanumeric() || char == b'_' {
-                        self.consume();
-                    } else {
-                        break;
+                    if self.input.get(end) == Some(&b'.') {
+                        // reject number ending with .
+                        return Err(LexerError::new(InvalidNumber, start_line, start_col));
                     }
+
+                    let temp = str::from_utf8(&self.input[start..=end]).unwrap();
+                    let num = temp.parse::<f64>().unwrap();
+
+                    break Ok(self.construct_token(Number(num), start_line, start_col));
                 }
 
-                let end = self.idx - 1;
-                let s = str::from_utf8(&self.input[start..=end]).unwrap();
+                b'=' => break Ok(self.construct_token(Equals, start_line, start_col)),
+                b';' => break Ok(self.construct_token(Semicolon, start_line, start_col)),
 
-                let kind = match s {
-                    "set" => Set,
-                    "out" => Out,
-                    _ => Identifier(s.to_string()),
-                };
+                b'(' => break Ok(self.construct_token(LParen, start_line, start_col)),
+                b')' => break Ok(self.construct_token(RParen, start_line, start_col)),
 
-                Ok(self.construct_token(kind, start_line, start_col))
+                b'+' => break Ok(self.construct_token(Add, start_line, start_col)),
+                b'-' => break Ok(self.construct_token(Sub, start_line, start_col)),
+                b'*' => break Ok(self.construct_token(Mul, start_line, start_col)),
+                b'/' => break Ok(self.construct_token(Div, start_line, start_col)),
+
+                b'#' => {
+                    while let Some(char) = self.peek() {
+                        if char != b'\n' {
+                            self.consume();
+                        } else {
+                            break;
+                        }
+                    }
+
+                    continue;
+                }
+
+                b'a'..=b'z' | b'A'..=b'Z' | b'_' => {
+                    let start = self.idx - 1;
+
+                    while let Some(char) = self.peek() {
+                        if char.is_ascii_alphanumeric() || char == b'_' {
+                            self.consume();
+                        } else {
+                            break;
+                        }
+                    }
+
+                    let end = self.idx - 1;
+                    let s = str::from_utf8(&self.input[start..=end]).unwrap();
+
+                    let kind = match s {
+                        "set" => Set,
+                        "out" => Out,
+                        _ => Identifier(s.to_string()),
+                    };
+
+                    break Ok(self.construct_token(kind, start_line, start_col));
+                }
+
+                b'\n' => {
+                    let newline = self.construct_token(Newline, start_line, start_col);
+                    self.line += 1;
+                    self.column = 1;
+
+                    break Ok(newline);
+                }
+
+                _ => {
+                    break Err(LexerError::new(
+                        UnidentifiedCharacter,
+                        start_line,
+                        start_col,
+                    ));
+                }
             }
-
-            b'\n' => {
-                let newline = self.construct_token(Newline, start_line, start_col);
-                self.line += 1;
-                self.column = 1;
-
-                Ok(newline)
-            }
-
-            _ => Err(LexerError::new(
-                UnidentifiedCharacter,
-                start_line,
-                start_col,
-            )),
         }
     }
 

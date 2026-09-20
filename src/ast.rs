@@ -22,7 +22,6 @@ pub enum BinaryOperators {
     Sub,
     Mul,
     Div,
-    IntDiv,
     Mod,
 }
 

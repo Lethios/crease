@@ -69,7 +69,6 @@ impl Interpreter {
                     BinaryOperators::Sub => Ok(left - right),
                     BinaryOperators::Mul => Ok(left * right),
                     BinaryOperators::Div => Ok(left / right),
-                    BinaryOperators::IntDiv => Ok((left / right).trunc()),
                     BinaryOperators::Mod => Ok(left % right),
                 }
             }

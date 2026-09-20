@@ -22,6 +22,7 @@ pub enum BinaryOperators {
     Sub,
     Mul,
     Div,
+    IntDiv,
 }
 
 #[derive(Debug)]

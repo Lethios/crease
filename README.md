@@ -7,7 +7,7 @@ statement  = (assignment | print) SEMICOLON;
 assignment = "set" IDENTIFIER "=" expr;
 print      = "out" expr;
 expr       = term { ("+" | "-") term };
-term       = factor { ("*" | "/") factor };
+term       = factor { ("*" | "/" | "//") factor };
 factor     = NUMBER | IDENTIFIER | "(" expr ")" | ("+" | "-") factor;
 
 NUMBER     = [0-9]+(\.[0-9]+)?;

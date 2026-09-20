@@ -84,7 +84,15 @@ impl<'a> Lexer<'a> {
                 b'+' => break Ok(self.construct_token(Add, start_line, start_col)),
                 b'-' => break Ok(self.construct_token(Sub, start_line, start_col)),
                 b'*' => break Ok(self.construct_token(Mul, start_line, start_col)),
-                b'/' => break Ok(self.construct_token(Div, start_line, start_col)),
+                b'/' => {
+                    if let Some(char) = self.peek() {
+                        if char == b'/' {
+                            self.consume();
+                            break Ok(self.construct_token(IntDiv, start_line, start_col));
+                        }
+                    }
+                    break Ok(self.construct_token(Div, start_line, start_col));
+                }
 
                 b'#' => {
                     while let Some(char) = self.peek() {

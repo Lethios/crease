@@ -6,6 +6,7 @@ pub enum TokenKind {
     Sub,
     Mul,
     Div,
+    IntDiv,
     Equals,
     LParen,
     RParen,

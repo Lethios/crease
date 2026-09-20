@@ -167,7 +167,10 @@ impl<'a> Parser<'a> {
     fn term(&mut self) -> Result<Expression, Error> {
         let mut lhs = self.factor()?;
 
-        while self.curr_token.kind == Mul || self.curr_token.kind == Div {
+        while self.curr_token.kind == Mul
+            || self.curr_token.kind == Div
+            || self.curr_token.kind == IntDiv
+        {
             let operator = self.consume()?;
             let rhs = self.factor()?;
 
@@ -183,6 +186,14 @@ impl<'a> Parser<'a> {
                 Div => {
                     let res = ast::BinaryOperation {
                         operator: BinaryOperators::Div,
+                        left: Box::new(lhs),
+                        right: Box::new(rhs),
+                    };
+                    lhs = Expression::BinaryOperation(res);
+                }
+                IntDiv => {
+                    let res = ast::BinaryOperation {
+                        operator: BinaryOperators::IntDiv,
                         left: Box::new(lhs),
                         right: Box::new(rhs),
                     };

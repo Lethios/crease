@@ -1,5 +1,8 @@
 use crate::{
-    error::{LexerError, LexerErrorKind::UnidentifiedCharacter},
+    error::{
+        LexerError,
+        LexerErrorKind::{InvalidNumber, UnexpectedCharacter, UnidentifiedCharacter},
+    },
     token::{
         Token,
         TokenKind::{self, *},
@@ -9,6 +12,8 @@ use crate::{
 pub struct Lexer<'a> {
     pub input: &'a [u8],
     pub idx: usize,
+    pub line: usize,
+    pub column: usize,
 }
 
 impl<'a> Lexer<'a> {
@@ -16,18 +21,21 @@ impl<'a> Lexer<'a> {
         Lexer {
             input: input.as_bytes(),
             idx: 0,
+            line: 1,
+            column: 1,
         }
     }
 
     pub fn next_token(&mut self) -> Result<Token, LexerError> {
         self.skip_whitespace();
+
+        let start_line = self.line;
+        let start_col = self.column;
+
         let char = self.consume();
 
         let Some(char) = char else {
-            return Ok(Token {
-                kind: EOF,
-                span: (self.idx, self.idx),
-            });
+            return Ok(self.construct_token(EOF, start_line, start_col));
         };
 
         match char {
@@ -39,49 +47,43 @@ impl<'a> Lexer<'a> {
                     if d.is_ascii_digit() {
                         self.consume();
                     } else if d == b'.' {
-                        self.consume();
-                        if !seen_decimal {
-                            seen_decimal = true;
-                        } else {
+                        if seen_decimal {
+                            // flag double decimal point 0..
                             return Err(LexerError::new(
-                                UnidentifiedCharacter,
-                                (self.idx, self.idx),
+                                UnexpectedCharacter,
+                                self.line,
+                                self.column,
                             ));
                         }
+                        self.consume();
+                        seen_decimal = true;
                     } else {
                         break;
                     }
                 }
                 let end = self.idx - 1;
 
-                let temp = str::from_utf8(&self.input[start..=end]).unwrap();
-                let digit = temp.parse::<f64>().unwrap();
-
-                Ok(Token {
-                    kind: Number(digit),
-                    span: (start, end),
-                })
-            }
-
-            b'=' => Ok(self.construct_token(Equals)),
-            b';' => Ok(self.construct_token(Semicolon)),
-
-            b'>' => {
-                if self.input[self.idx] == b'>' {
-                    self.consume();
-                    return Ok(self.construct_token(Print));
+                if self.input[end] == b'.' {
+                    // flag number ending with .
+                    return Err(LexerError::new(InvalidNumber, start_line, start_col));
                 }
 
-                Err(LexerError::new(UnidentifiedCharacter, (self.idx, self.idx)))
+                let temp = str::from_utf8(&self.input[start..=end]).unwrap();
+                let num = temp.parse::<f64>().unwrap();
+
+                Ok(self.construct_token(Number(num), start_line, start_col))
             }
 
-            b'(' => Ok(self.construct_token(LParen)),
-            b')' => Ok(self.construct_token(RParen)),
+            b'=' => Ok(self.construct_token(Equals, start_line, start_col)),
+            b';' => Ok(self.construct_token(Semicolon, start_line, start_col)),
 
-            b'+' => Ok(self.construct_token(Add)),
-            b'-' => Ok(self.construct_token(Sub)),
-            b'*' => Ok(self.construct_token(Mul)),
-            b'/' => Ok(self.construct_token(Div)),
+            b'(' => Ok(self.construct_token(LParen, start_line, start_col)),
+            b')' => Ok(self.construct_token(RParen, start_line, start_col)),
+
+            b'+' => Ok(self.construct_token(Add, start_line, start_col)),
+            b'-' => Ok(self.construct_token(Sub, start_line, start_col)),
+            b'*' => Ok(self.construct_token(Mul, start_line, start_col)),
+            b'/' => Ok(self.construct_token(Div, start_line, start_col)),
 
             b'a'..=b'z' | b'A'..=b'Z' | b'_' => {
                 let start = self.idx - 1;
@@ -95,18 +97,30 @@ impl<'a> Lexer<'a> {
                 }
 
                 let end = self.idx - 1;
+                let s = str::from_utf8(&self.input[start..=end]).unwrap();
 
-                let temp = str::from_utf8(&self.input[start..=end]).unwrap();
-                let s = temp.parse::<String>().unwrap();
+                let kind = match s {
+                    "set" => Set,
+                    "out" => Out,
+                    _ => Identifier(s.to_string()),
+                };
 
-                let kind = if s == "set" { Set } else { Identifier(s) };
-                Ok(Token {
-                    kind,
-                    span: (start, end),
-                })
+                Ok(self.construct_token(kind, start_line, start_col))
             }
 
-            _ => Err(LexerError::new(UnidentifiedCharacter, (self.idx, self.idx))),
+            b'\n' => {
+                let newline = self.construct_token(Newline, start_line, start_col);
+                self.line += 1;
+                self.column = 1;
+
+                Ok(newline)
+            }
+
+            _ => Err(LexerError::new(
+                UnidentifiedCharacter,
+                start_line,
+                start_col,
+            )),
         }
     }
 
@@ -114,6 +128,7 @@ impl<'a> Lexer<'a> {
         let char = self.input.get(self.idx).copied();
         if char.is_some() {
             self.idx += 1;
+            self.column += 1;
         }
 
         char
@@ -125,7 +140,7 @@ impl<'a> Lexer<'a> {
 
     fn skip_whitespace(&mut self) {
         while let Some(char) = self.peek() {
-            if char.is_ascii_whitespace() {
+            if char != b'\n' && char.is_ascii_whitespace() {
                 self.consume();
             } else {
                 break;
@@ -133,10 +148,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn construct_token(&self, kind: TokenKind) -> Token {
-        Token {
-            kind,
-            span: (self.idx, self.idx),
-        }
+    fn construct_token(&self, kind: TokenKind, line: usize, column: usize) -> Token {
+        Token { kind, line, column }
     }
 }

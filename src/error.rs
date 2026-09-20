@@ -10,8 +10,16 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Lex(l) => write!(f, "Lexer error at column {}: {}", l.span.0, l),
-            Error::Parse(p) => write!(f, "Parser error at column {}: {}", p.span.0, p),
+            Error::Lex(lex) => write!(
+                f,
+                "Lexer error at line {}, column {}: {}",
+                lex.line, lex.column, lex
+            ),
+            Error::Parse(parse) => write!(
+                f,
+                "Parser error at line {}, column {}: {}",
+                parse.line, parse.column, parse
+            ),
             Error::Runtime(r) => write!(f, "Runtime error: {}", r),
         }
     }
@@ -38,17 +46,20 @@ impl From<RuntimeError> for Error {
 #[derive(Debug, Clone, Copy)]
 pub enum LexerErrorKind {
     UnidentifiedCharacter,
+    UnexpectedCharacter,
+    InvalidNumber,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct LexerError {
     pub kind: LexerErrorKind,
-    pub span: (usize, usize),
+    pub line: usize,
+    pub column: usize,
 }
 
 impl LexerError {
-    pub fn new(kind: LexerErrorKind, span: (usize, usize)) -> Self {
-        Self { kind, span }
+    pub fn new(kind: LexerErrorKind, line: usize, column: usize) -> Self {
+        Self { kind, line, column }
     }
 }
 
@@ -56,6 +67,8 @@ impl fmt::Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
             LexerErrorKind::UnidentifiedCharacter => write!(f, "unidentified character"),
+            LexerErrorKind::UnexpectedCharacter => write!(f, "unexpected character"),
+            LexerErrorKind::InvalidNumber => write!(f, "invalid number"),
         }
     }
 }
@@ -74,12 +87,13 @@ pub enum ParserErrorKind {
 #[derive(Debug, Clone, Copy)]
 pub struct ParserError {
     pub kind: ParserErrorKind,
-    pub span: (usize, usize),
+    pub line: usize,
+    pub column: usize,
 }
 
 impl ParserError {
-    pub fn new(kind: ParserErrorKind, span: (usize, usize)) -> Self {
-        Self { kind, span }
+    pub fn new(kind: ParserErrorKind, line: usize, column: usize) -> Self {
+        Self { kind, line, column }
     }
 }
 
@@ -90,7 +104,7 @@ impl fmt::Display for ParserError {
             ParserErrorKind::UnidentifiedToken => write!(f, "unidentified token"),
             ParserErrorKind::ExpectedStatement => write!(f, "expected statement"),
             ParserErrorKind::UnexpectedToken => write!(f, "unexpected token"),
-            ParserErrorKind::MissingSemicolon => write!(f, "unexpected token"),
+            ParserErrorKind::MissingSemicolon => write!(f, "missing semicolon"),
         }
     }
 }

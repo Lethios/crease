@@ -39,11 +39,21 @@ impl<'a> Parser<'a> {
         Ok(prev)
     }
 
+    fn skip_newlines(&mut self) -> Result<(), Error> {
+        while self.curr_token.kind == TokenKind::Newline {
+            self.consume()?;
+        }
+
+        Ok(())
+    }
+
     fn program(&mut self) -> Result<Vec<Statement>, Error> {
         let mut statements = Vec::new();
+        self.skip_newlines()?;
 
         while self.curr_token.kind != EOF {
             statements.push(self.statement()?);
+            self.skip_newlines()?;
         }
 
         Ok(statements)
@@ -54,12 +64,24 @@ impl<'a> Parser<'a> {
 
         match self.curr_token.kind {
             TokenKind::Set => res = self.assignment()?,
-            TokenKind::Print => res = self.print()?,
-            _ => return Err(ParserError::new(ExpectedStatement, self.curr_token.span).into()),
+            TokenKind::Out => res = self.print()?,
+            _ => {
+                return Err(ParserError::new(
+                    ExpectedStatement,
+                    self.curr_token.line,
+                    self.curr_token.column,
+                )
+                .into());
+            }
         }
 
         if self.curr_token.kind != TokenKind::Semicolon {
-            return Err(ParserError::new(MissingSemicolon, self.curr_token.span).into());
+            return Err(ParserError::new(
+                MissingSemicolon,
+                self.curr_token.line,
+                self.curr_token.column - 1,
+            )
+            .into());
         }
         self.consume()?;
 
@@ -70,7 +92,12 @@ impl<'a> Parser<'a> {
         self.consume()?;
 
         if !matches!(&self.curr_token.kind, TokenKind::Identifier(_)) {
-            return Err(ParserError::new(UnexpectedToken, self.curr_token.span).into());
+            return Err(ParserError::new(
+                UnexpectedToken,
+                self.curr_token.line,
+                self.curr_token.column,
+            )
+            .into());
         }
         let iden = match self.consume()?.kind {
             TokenKind::Identifier(s) => s,
@@ -78,7 +105,12 @@ impl<'a> Parser<'a> {
         };
 
         if self.curr_token.kind != TokenKind::Equals {
-            return Err(ParserError::new(UnexpectedToken, self.curr_token.span).into());
+            return Err(ParserError::new(
+                UnexpectedToken,
+                self.curr_token.line,
+                self.curr_token.column,
+            )
+            .into());
         }
         self.consume()?;
 
@@ -121,7 +153,12 @@ impl<'a> Parser<'a> {
                     lhs = Expression::BinaryOperation(res);
                 }
                 _ => {
-                    return Err(ParserError::new(UnidentifiedToken, operator.span).into());
+                    return Err(ParserError::new(
+                        UnidentifiedToken,
+                        operator.line,
+                        operator.column,
+                    )
+                    .into());
                 }
             }
         }
@@ -154,7 +191,12 @@ impl<'a> Parser<'a> {
                     lhs = Expression::BinaryOperation(res);
                 }
                 _ => {
-                    return Err(ParserError::new(UnidentifiedToken, operator.span).into());
+                    return Err(ParserError::new(
+                        UnidentifiedToken,
+                        operator.line,
+                        operator.column,
+                    )
+                    .into());
                 }
             }
         }
@@ -179,7 +221,9 @@ impl<'a> Parser<'a> {
 
                 let rparen = self.consume()?;
                 if rparen.kind != RParen {
-                    return Err(ParserError::new(MissingDelimiter, rparen.span).into());
+                    return Err(
+                        ParserError::new(MissingDelimiter, rparen.line, rparen.column).into(),
+                    );
                 }
 
                 Ok(res)
@@ -198,7 +242,7 @@ impl<'a> Parser<'a> {
                 };
                 Ok(Expression::UnaryOperation(res))
             }
-            _ => Err(ParserError::new(UnidentifiedToken, token.span).into()),
+            _ => Err(ParserError::new(UnidentifiedToken, token.column, token.column).into()),
         }
     }
 }

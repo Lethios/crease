@@ -4,7 +4,9 @@ use crease::lexer::Lexer;
 use crease::parser::Parser;
 
 fn main() {
-    let src = "set x = -(-(3*5*(2-3))); >> x;";
+    let src = r#"
+out (1 + 2;
+"#;
 
     let result = || -> Result<(), Error> {
         let lexer = Lexer::new(src);

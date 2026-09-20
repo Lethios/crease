@@ -9,20 +9,22 @@ pub enum TokenKind {
     Equals,
     LParen,
     RParen,
-    Print,
+    Out,
     Set,
     Semicolon,
+    Newline,
     EOF,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub kind: TokenKind,
-    pub span: (usize, usize),
+    pub line: usize,
+    pub column: usize,
 }
 
 impl Token {
-    pub fn new(kind: TokenKind, span: (usize, usize)) -> Self {
-        Token { kind, span }
+    pub fn new(kind: TokenKind, line: usize, column: usize) -> Self {
+        Token { kind, line, column }
     }
 }

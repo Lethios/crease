@@ -1,6 +1,6 @@
 # crease (WIP Language)
 
-### Current Grammar (EBNF)
+### Current Grammar 
 ```ebnf
 program    = { statement };
 statement  = (assignment | print) SEMICOLON;
@@ -14,4 +14,4 @@ NUMBER     => [0-9]+(\.[0-9]+)?;
 IDENTIFIER => [a-zA-Z_][a-zA-Z0-9_]*;
 ```
 
-- TODO: Fix error col marker, add line numbers and additional data, standardize var names, error name revamp, code cleanup.
+- TODO: Fix error col marker, add line numbers and additional data, standardize var names, error name revamp, crate import name fixes, code cleanup.

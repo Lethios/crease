@@ -7,6 +7,7 @@ pub enum TokenKind {
     Mul,
     Div,
     IntDiv,
+    Percent,
     Equals,
     LParen,
     RParen,

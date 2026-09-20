@@ -23,6 +23,7 @@ pub enum BinaryOperators {
     Mul,
     Div,
     IntDiv,
+    Mod,
 }
 
 #[derive(Debug)]

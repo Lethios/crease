@@ -93,6 +93,7 @@ impl<'a> Lexer<'a> {
                     }
                     break Ok(self.construct_token(Div, start_line, start_col));
                 }
+                b'%' => break Ok(self.construct_token(Percent, start_line, start_col)),
 
                 b'#' => {
                     while let Some(char) = self.peek() {

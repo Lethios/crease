@@ -170,6 +170,7 @@ impl<'a> Parser<'a> {
         while self.curr_token.kind == Mul
             || self.curr_token.kind == Div
             || self.curr_token.kind == IntDiv
+            || self.curr_token.kind == Percent
         {
             let operator = self.consume()?;
             let rhs = self.factor()?;
@@ -194,6 +195,14 @@ impl<'a> Parser<'a> {
                 IntDiv => {
                     let res = ast::BinaryOperation {
                         operator: BinaryOperators::IntDiv,
+                        left: Box::new(lhs),
+                        right: Box::new(rhs),
+                    };
+                    lhs = Expression::BinaryOperation(res);
+                }
+                Percent => {
+                    let res = ast::BinaryOperation {
+                        operator: BinaryOperators::Mod,
                         left: Box::new(lhs),
                         right: Box::new(rhs),
                     };

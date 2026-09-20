@@ -5,8 +5,10 @@ use crease::parser::Parser;
 
 fn main() {
     let src = r#"
-set h = 45;
-out h;
+set x = 5;
+set y = 3;
+set z = x % y;
+out z;
 "#;
 
     let result = || -> Result<(), Error> {

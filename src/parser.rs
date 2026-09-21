@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::ast::{self, Expression};
 use crate::error::{Error, ParserError, ParserErrorKind::*};
 use crate::lexer::Lexer;
 use crate::token::{
@@ -129,12 +129,7 @@ impl<'a> Parser<'a> {
             self.consume()?;
             let rhs = self.and_expr()?;
 
-            let res = ast::BinaryOperation {
-                operator: ast::BinaryOperators::Or,
-                left: Box::new(lhs),
-                right: Box::new(rhs),
-            };
-            lhs = ast::Expression::BinaryOperation(res);
+            lhs = self.construct_bin_expr(ast::BinaryOperators::Or, lhs, rhs)
         }
 
         Ok(lhs)
@@ -147,12 +142,7 @@ impl<'a> Parser<'a> {
             self.consume()?;
             let rhs = self.equality()?;
 
-            let res = ast::BinaryOperation {
-                operator: ast::BinaryOperators::And,
-                left: Box::new(lhs),
-                right: Box::new(rhs),
-            };
-            lhs = ast::Expression::BinaryOperation(res);
+            lhs = self.construct_bin_expr(ast::BinaryOperators::And, lhs, rhs)
         }
 
         Ok(lhs)
@@ -166,21 +156,9 @@ impl<'a> Parser<'a> {
             let rhs = self.comparison()?;
 
             match operator.kind {
-                DEquals => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::Equals,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
-                }
+                DEquals => lhs = self.construct_bin_expr(ast::BinaryOperators::Equals, lhs, rhs),
                 NotEquals => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::NotEquals,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
+                    lhs = self.construct_bin_expr(ast::BinaryOperators::NotEquals, lhs, rhs)
                 }
                 _ => {
                     return Err(ParserError::new(
@@ -208,37 +186,14 @@ impl<'a> Parser<'a> {
             let rhs = self.arithmetic()?;
 
             match operator.kind {
-                LAngle => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::LThan,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
-                }
-                RAngle => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::GThan,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
-                }
+                LAngle => lhs = self.construct_bin_expr(ast::BinaryOperators::LThan, lhs, rhs),
+                RAngle => lhs = self.construct_bin_expr(ast::BinaryOperators::GThan, lhs, rhs),
                 LAngleEquals => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::LThanEquals,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
+                    lhs = self.construct_bin_expr(ast::BinaryOperators::LThanEquals, lhs, rhs)
                 }
+
                 RAngleEquals => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::GThanEquals,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
+                    lhs = self.construct_bin_expr(ast::BinaryOperators::GThanEquals, lhs, rhs)
                 }
                 _ => {
                     return Err(ParserError::new(
@@ -262,22 +217,8 @@ impl<'a> Parser<'a> {
             let rhs = self.term()?;
 
             match operator.kind {
-                Plus => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::Add,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
-                }
-                Minus => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::Sub,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
-                }
+                Plus => lhs = self.construct_bin_expr(ast::BinaryOperators::Add, lhs, rhs),
+                Minus => lhs = self.construct_bin_expr(ast::BinaryOperators::Sub, lhs, rhs),
                 _ => {
                     return Err(ParserError::new(
                         UnidentifiedToken,
@@ -303,30 +244,9 @@ impl<'a> Parser<'a> {
             let rhs = self.factor()?;
 
             match operator.kind {
-                Star => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::Mul,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
-                }
-                Slash => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::Div,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
-                }
-                Percent => {
-                    let res = ast::BinaryOperation {
-                        operator: ast::BinaryOperators::Mod,
-                        left: Box::new(lhs),
-                        right: Box::new(rhs),
-                    };
-                    lhs = ast::Expression::BinaryOperation(res);
-                }
+                Star => lhs = self.construct_bin_expr(ast::BinaryOperators::Mul, lhs, rhs),
+                Slash => lhs = self.construct_bin_expr(ast::BinaryOperators::Div, lhs, rhs),
+                Percent => lhs = self.construct_bin_expr(ast::BinaryOperators::Mod, lhs, rhs),
                 _ => {
                     return Err(ParserError::new(
                         UnidentifiedToken,
@@ -396,5 +316,20 @@ impl<'a> Parser<'a> {
             }
             _ => Err(ParserError::new(UnidentifiedToken, token.line, token.column).into()),
         }
+    }
+
+    fn construct_bin_expr(
+        &self,
+        operator: ast::BinaryOperators,
+        lhs: Expression,
+        rhs: Expression,
+    ) -> ast::Expression {
+        let res = ast::BinaryOperation {
+            operator,
+            left: Box::new(lhs),
+            right: Box::new(rhs),
+        };
+
+        ast::Expression::BinaryOperation(res)
     }
 }

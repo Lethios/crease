@@ -3,9 +3,10 @@
 ### Current Grammar 
 ```ebnf
 program    = { statement } EOF;
-statement  = (assignment | print) (NEWLINE | EOF);
+statement  = (assignment | print | if) (NEWLINE | EOF);
 assignment = "set" IDENTIFIER "=" expr;
 print      = "out" expr;
+if         = "if" expr ":" NEWLINE { statement } ["else" ":" NEWLINE { statement }] "endif";
 expr       = or_expr;
 or_expr    = and_expr { "||" and_expr };
 and_expr   = equality { "&&" equality };

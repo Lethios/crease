@@ -5,8 +5,7 @@ use crease::parser::Parser;
 
 fn main() {
     let src = r#"
-set x = (4 >= 3) && (2 < 3) && (3 == 3)
-out x
+
 "#;
 
     let result = || -> Result<(), Error> {

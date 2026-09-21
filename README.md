@@ -2,15 +2,21 @@
 
 ### Current Grammar 
 ```ebnf
-program    = { statement };
-statement  = (assignment | print) SEMICOLON;
+program    = { statement } EOF;
+statement  = (assignment | print) (NEWLINE | EOF);
 assignment = "set" IDENTIFIER "=" expr;
 print      = "out" expr;
-expr       = term { ("+" | "-") term };
+expr       = or_expr;
+or_expr    = and_expr { "||" and_expr };
+and_expr   = equality { "&&" equality };
+equality   = comparison { ("==" | "!=") comparison };
+comparison = arithmetic { ("<" | ">" | "<=" | ">=") arithmetic };
+arithmetic = term { ("+" | "-") term };
 term       = factor { ("*" | "/" | "%") factor };
-factor     = NUMBER | IDENTIFIER | "(" expr ")" | ("+" | "-") factor;
+factor     = NUMBER | BOOLEAN | IDENTIFIER | "(" expr ")" | ("+" | "-" | "!") factor;
 
 NUMBER     = [0-9]+(\.[0-9]+)?;
+BOOLEAN    = "true" | "false";
 IDENTIFIER = [a-zA-Z_][a-zA-Z0-9_]*;
 COMMENT    = "#" [^\n]*;
 ```

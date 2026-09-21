@@ -66,15 +66,14 @@ impl<'a> Parser<'a> {
             }
         };
 
-        if self.curr_token.kind != TokenKind::Semicolon {
+        if self.curr_token.kind != TokenKind::Newline && self.curr_token.kind != TokenKind::EOF {
             return Err(ParserError::new(
-                MissingSemicolon,
+                UnexpectedToken,
                 self.curr_token.line,
                 self.curr_token.column,
             )
             .into());
         }
-        self.consume()?;
 
         Ok(res)
     }
@@ -120,6 +119,142 @@ impl<'a> Parser<'a> {
     }
 
     fn expr(&mut self) -> Result<ast::Expression, Error> {
+        self.or_expr()
+    }
+
+    fn or_expr(&mut self) -> Result<ast::Expression, Error> {
+        let mut lhs = self.and_expr()?;
+
+        while self.curr_token.kind == DPipe {
+            self.consume()?;
+            let rhs = self.and_expr()?;
+
+            let res = ast::BinaryOperation {
+                operator: ast::BinaryOperators::Or,
+                left: Box::new(lhs),
+                right: Box::new(rhs),
+            };
+            lhs = ast::Expression::BinaryOperation(res);
+        }
+
+        Ok(lhs)
+    }
+
+    fn and_expr(&mut self) -> Result<ast::Expression, Error> {
+        let mut lhs = self.equality()?;
+
+        while self.curr_token.kind == DAmpersand {
+            self.consume()?;
+            let rhs = self.equality()?;
+
+            let res = ast::BinaryOperation {
+                operator: ast::BinaryOperators::And,
+                left: Box::new(lhs),
+                right: Box::new(rhs),
+            };
+            lhs = ast::Expression::BinaryOperation(res);
+        }
+
+        Ok(lhs)
+    }
+
+    fn equality(&mut self) -> Result<ast::Expression, Error> {
+        let mut lhs = self.comparison()?;
+
+        while self.curr_token.kind == DEquals || self.curr_token.kind == NotEquals {
+            let operator = self.consume()?;
+            let rhs = self.comparison()?;
+
+            match operator.kind {
+                DEquals => {
+                    let res = ast::BinaryOperation {
+                        operator: ast::BinaryOperators::Equals,
+                        left: Box::new(lhs),
+                        right: Box::new(rhs),
+                    };
+                    lhs = ast::Expression::BinaryOperation(res);
+                }
+                NotEquals => {
+                    let res = ast::BinaryOperation {
+                        operator: ast::BinaryOperators::NotEquals,
+                        left: Box::new(lhs),
+                        right: Box::new(rhs),
+                    };
+                    lhs = ast::Expression::BinaryOperation(res);
+                }
+                _ => {
+                    return Err(ParserError::new(
+                        UnidentifiedToken,
+                        operator.line,
+                        operator.column,
+                    )
+                    .into());
+                }
+            }
+        }
+
+        Ok(lhs)
+    }
+
+    fn comparison(&mut self) -> Result<ast::Expression, Error> {
+        let mut lhs = self.arithmetic()?;
+
+        while self.curr_token.kind == LAngle
+            || self.curr_token.kind == RAngle
+            || self.curr_token.kind == LAngleEquals
+            || self.curr_token.kind == RAngleEquals
+        {
+            let operator = self.consume()?;
+            let rhs = self.arithmetic()?;
+
+            match operator.kind {
+                LAngle => {
+                    let res = ast::BinaryOperation {
+                        operator: ast::BinaryOperators::LThan,
+                        left: Box::new(lhs),
+                        right: Box::new(rhs),
+                    };
+                    lhs = ast::Expression::BinaryOperation(res);
+                }
+                RAngle => {
+                    let res = ast::BinaryOperation {
+                        operator: ast::BinaryOperators::GThan,
+                        left: Box::new(lhs),
+                        right: Box::new(rhs),
+                    };
+                    lhs = ast::Expression::BinaryOperation(res);
+                }
+                LAngleEquals => {
+                    let res = ast::BinaryOperation {
+                        operator: ast::BinaryOperators::LThanEquals,
+                        left: Box::new(lhs),
+                        right: Box::new(rhs),
+                    };
+                    lhs = ast::Expression::BinaryOperation(res);
+                }
+                RAngleEquals => {
+                    let res = ast::BinaryOperation {
+                        operator: ast::BinaryOperators::GThanEquals,
+                        left: Box::new(lhs),
+                        right: Box::new(rhs),
+                    };
+                    lhs = ast::Expression::BinaryOperation(res);
+                }
+                _ => {
+                    return Err(ParserError::new(
+                        UnidentifiedToken,
+                        operator.line,
+                        operator.column,
+                    )
+                    .into());
+                }
+            }
+        }
+
+        Ok(lhs)
+    }
+
+    fn arithmetic(&mut self) -> Result<ast::Expression, Error> {
         let mut lhs = self.term()?;
 
         while self.curr_token.kind == Plus || self.curr_token.kind == Minus {
@@ -214,6 +349,14 @@ impl<'a> Parser<'a> {
                 let res = ast::Number(n);
                 Ok(ast::Expression::Number(res))
             }
+            True => {
+                let res = ast::Boolean(true);
+                Ok(ast::Expression::Boolean(res))
+            }
+            False => {
+                let res = ast::Boolean(false);
+                Ok(ast::Expression::Boolean(res))
+            }
             Identifier(i) => {
                 let res = ast::Identifier(i);
                 Ok(ast::Expression::Identifier(res))
@@ -240,6 +383,13 @@ impl<'a> Parser<'a> {
             Minus => {
                 let res = ast::UnaryOperation {
                     operator: ast::UnaryOperators::Sub,
+                    operand: Box::new(self.factor()?),
+                };
+                Ok(ast::Expression::UnaryOperation(res))
+            }
+            Exclaim => {
+                let res = ast::UnaryOperation {
+                    operator: ast::UnaryOperators::Not,
                     operand: Box::new(self.factor()?),
                 };
                 Ok(ast::Expression::UnaryOperation(res))

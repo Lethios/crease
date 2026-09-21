@@ -2,12 +2,16 @@
 pub struct Number(pub f64);
 
 #[derive(Debug)]
+pub struct Boolean(pub bool);
+
+#[derive(Debug)]
 pub struct Identifier(pub String);
 
 #[derive(Debug)]
 pub enum UnaryOperators {
     Add,
     Sub,
+    Not,
 }
 
 #[derive(Debug)]
@@ -23,6 +27,14 @@ pub enum BinaryOperators {
     Mul,
     Div,
     Mod,
+    LThan,
+    GThan,
+    LThanEquals,
+    GThanEquals,
+    Equals,
+    NotEquals,
+    And,
+    Or,
 }
 
 #[derive(Debug)]
@@ -35,6 +47,7 @@ pub struct BinaryOperation {
 #[derive(Debug)]
 pub enum Expression {
     Number(Number),
+    Boolean(Boolean),
     Identifier(Identifier),
     UnaryOperation(UnaryOperation),
     BinaryOperation(BinaryOperation),

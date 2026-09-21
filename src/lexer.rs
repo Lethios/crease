@@ -70,8 +70,15 @@ impl<'a> Lexer<'a> {
                     break Ok(self.construct_token(Number(num), start_line, start_col));
                 }
 
-                b'=' => break Ok(self.construct_token(Equals, start_line, start_col)),
-                b';' => break Ok(self.construct_token(Semicolon, start_line, start_col)),
+                b'=' => {
+                    if let Some(char) = self.peek()
+                        && char == b'='
+                    {
+                        self.consume();
+                        break Ok(self.construct_token(DEquals, start_line, start_col));
+                    }
+                    break Ok(self.construct_token(Equals, start_line, start_col));
+                }
 
                 b'(' => break Ok(self.construct_token(LParen, start_line, start_col)),
                 b')' => break Ok(self.construct_token(RParen, start_line, start_col)),
@@ -81,6 +88,65 @@ impl<'a> Lexer<'a> {
                 b'*' => break Ok(self.construct_token(Star, start_line, start_col)),
                 b'/' => break Ok(self.construct_token(Slash, start_line, start_col)),
                 b'%' => break Ok(self.construct_token(Percent, start_line, start_col)),
+
+                b'<' => {
+                    if let Some(char) = self.peek()
+                        && char == b'='
+                    {
+                        self.consume();
+                        break Ok(self.construct_token(LAngleEquals, start_line, start_col));
+                    }
+
+                    break Ok(self.construct_token(LAngle, start_line, start_col));
+                }
+                b'>' => {
+                    if let Some(char) = self.peek()
+                        && char == b'='
+                    {
+                        self.consume();
+                        break Ok(self.construct_token(RAngleEquals, start_line, start_col));
+                    }
+
+                    break Ok(self.construct_token(RAngle, start_line, start_col));
+                }
+                b'!' => {
+                    if let Some(char) = self.peek()
+                        && char == b'='
+                    {
+                        self.consume();
+                        break Ok(self.construct_token(NotEquals, start_line, start_col));
+                    }
+
+                    break Ok(self.construct_token(Exclaim, start_line, start_col));
+                }
+                b'&' => {
+                    if let Some(char) = self.peek()
+                        && char == b'&'
+                    {
+                        self.consume();
+                        break Ok(self.construct_token(DAmpersand, start_line, start_col));
+                    } else {
+                        break Err(LexerError::new(
+                            UnidentifiedCharacter,
+                            start_line,
+                            start_col,
+                        ));
+                    }
+                }
+                b'|' => {
+                    if let Some(char) = self.peek()
+                        && char == b'|'
+                    {
+                        self.consume();
+                        break Ok(self.construct_token(DPipe, start_line, start_col));
+                    } else {
+                        break Err(LexerError::new(
+                            UnidentifiedCharacter,
+                            start_line,
+                            start_col,
+                        ));
+                    }
+                }
 
                 b'#' => {
                     while let Some(char) = self.peek() {
@@ -111,6 +177,8 @@ impl<'a> Lexer<'a> {
                     let kind = match s {
                         "set" => Set,
                         "out" => Out,
+                        "true" => True,
+                        "false" => False,
                         _ => Identifier(s.to_string()),
                     };
 

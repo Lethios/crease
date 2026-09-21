@@ -114,6 +114,8 @@ impl std::error::Error for ParserError {}
 #[derive(Debug, Clone, Copy)]
 pub enum RuntimeErrorKind {
     UndefinedVariable,
+    TypeMismatch,
+    DivisionByZero,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -131,6 +133,8 @@ impl fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
             RuntimeErrorKind::UndefinedVariable => write!(f, "undefined variable"),
+            RuntimeErrorKind::TypeMismatch => write!(f, "type mismatch"),
+            RuntimeErrorKind::DivisionByZero => write!(f, "division by zero"),
         }
     }
 }

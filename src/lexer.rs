@@ -1,12 +1,7 @@
-use crate::{
-    error::{
-        LexerError,
-        LexerErrorKind::{InvalidNumber, UnexpectedCharacter, UnidentifiedCharacter},
-    },
-    token::{
-        Token,
-        TokenKind::{self, *},
-    },
+use crate::error::{LexerError, LexerErrorKind::*};
+use crate::token::{
+    Token,
+    TokenKind::{self, *},
 };
 
 pub struct Lexer<'a> {
@@ -81,10 +76,10 @@ impl<'a> Lexer<'a> {
                 b'(' => break Ok(self.construct_token(LParen, start_line, start_col)),
                 b')' => break Ok(self.construct_token(RParen, start_line, start_col)),
 
-                b'+' => break Ok(self.construct_token(Add, start_line, start_col)),
-                b'-' => break Ok(self.construct_token(Sub, start_line, start_col)),
-                b'*' => break Ok(self.construct_token(Mul, start_line, start_col)),
-                b'/' => break Ok(self.construct_token(Div, start_line, start_col)),
+                b'+' => break Ok(self.construct_token(Plus, start_line, start_col)),
+                b'-' => break Ok(self.construct_token(Minus, start_line, start_col)),
+                b'*' => break Ok(self.construct_token(Star, start_line, start_col)),
+                b'/' => break Ok(self.construct_token(Slash, start_line, start_col)),
                 b'%' => break Ok(self.construct_token(Percent, start_line, start_col)),
 
                 b'#' => {

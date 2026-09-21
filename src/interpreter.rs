@@ -7,13 +7,13 @@ use crate::{
 
 #[derive(Default, Debug)]
 pub struct Interpreter {
-    variables: HashMap<String, f64>,
+    global_var: HashMap<String, f64>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         Interpreter {
-            variables: HashMap::new(),
+            global_var: HashMap::new(),
         }
     }
 
@@ -31,7 +31,7 @@ impl Interpreter {
                 let key = assign.iden.0.clone();
                 let val = self.expression(&assign.expr)?;
 
-                self.variables.insert(key, val);
+                self.global_var.insert(key, val);
             }
             Statement::Print(print) => {
                 let val = self.expression(&print.0)?;
@@ -46,7 +46,7 @@ impl Interpreter {
         match expr {
             Expression::Number(num) => Ok(num.0),
 
-            Expression::Identifier(iden) => match self.variables.get(&iden.0) {
+            Expression::Identifier(iden) => match self.global_var.get(&iden.0) {
                 Some(val) => Ok(*val),
                 None => Err(RuntimeError::new(UndefinedVariable).into()),
             },

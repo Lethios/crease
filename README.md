@@ -15,4 +15,4 @@ IDENTIFIER = [a-zA-Z_][a-zA-Z0-9_]*;
 COMMENT    = "#" [^\n]*;
 ```
 
-- TODO: Fix error col marker, add line numbers and additional data, standardize var names, error name revamp, crate import name fixes, code cleanup.
+- TODO: Fix error col marker, add line numbers and additional data, standardize var names, error name revamp, crate import name fixes, token name to literal char name, code cleanup.

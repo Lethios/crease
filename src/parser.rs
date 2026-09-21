@@ -133,10 +133,12 @@ impl<'a> Parser<'a> {
             .into());
         }
         self.consume()?;
+        self.skip_newlines()?;
 
         let mut if_stmt = Vec::new();
         while self.curr_token.kind != TokenKind::Else && self.curr_token.kind != TokenKind::EndIf {
             if_stmt.push(self.statement()?);
+            self.skip_newlines()?;
         }
 
         let mut else_stmt = Vec::new();
@@ -152,9 +154,11 @@ impl<'a> Parser<'a> {
                 .into());
             }
             self.consume()?;
+            self.skip_newlines()?;
 
             while self.curr_token.kind != TokenKind::EndIf {
                 else_stmt.push(self.statement()?);
+                self.skip_newlines()?;
             }
         }
 

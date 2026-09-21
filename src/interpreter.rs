@@ -47,6 +47,20 @@ impl Interpreter {
                     Value::Boolean(bool) => println!("{}", bool),
                 }
             }
+            ast::Statement::IfStmt(if_else) => match self.expression(&if_else.if_cond)? {
+                Value::Boolean(bool) => {
+                    if bool {
+                        for stmt in &if_else.if_stmt {
+                            self.statement(stmt)?;
+                        }
+                    } else {
+                        for stmt in &if_else.else_stmt {
+                            self.statement(stmt)?;
+                        }
+                    }
+                }
+                _ => return Err(RuntimeError::new(TypeMismatch).into()),
+            },
         }
 
         Ok(())

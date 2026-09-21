@@ -56,6 +56,7 @@ impl<'a> Parser<'a> {
         let res = match self.curr_token.kind {
             TokenKind::Set => self.assignment()?,
             TokenKind::Out => self.print()?,
+            TokenKind::If => self.if_else()?,
             _ => {
                 return Err(ParserError::new(
                     ExpectedStatement,
@@ -116,6 +117,63 @@ impl<'a> Parser<'a> {
 
         let expr = self.expr()?;
         Ok(ast::Statement::Print(ast::Print(expr)))
+    }
+
+    fn if_else(&mut self) -> Result<ast::Statement, Error> {
+        self.consume()?;
+
+        let if_cond = self.expr()?;
+
+        if self.curr_token.kind != TokenKind::Colon {
+            return Err(ParserError::new(
+                UnidentifiedToken,
+                self.curr_token.line,
+                self.curr_token.column,
+            )
+            .into());
+        }
+        self.consume()?;
+
+        let mut if_stmt = Vec::new();
+        while self.curr_token.kind != TokenKind::Else && self.curr_token.kind != TokenKind::EndIf {
+            if_stmt.push(self.statement()?);
+        }
+
+        let mut else_stmt = Vec::new();
+        if self.curr_token.kind == Else {
+            self.consume()?;
+
+            if self.curr_token.kind != TokenKind::Colon {
+                return Err(ParserError::new(
+                    UnidentifiedToken,
+                    self.curr_token.line,
+                    self.curr_token.column,
+                )
+                .into());
+            }
+            self.consume()?;
+
+            while self.curr_token.kind != TokenKind::EndIf {
+                else_stmt.push(self.statement()?);
+            }
+        }
+
+        if self.curr_token.kind != TokenKind::EndIf {
+            return Err(ParserError::new(
+                UnidentifiedToken,
+                self.curr_token.line,
+                self.curr_token.column,
+            )
+            .into());
+        }
+        self.consume()?;
+
+        let res = ast::IfStmt {
+            if_cond,
+            if_stmt,
+            else_stmt,
+        };
+        Ok(ast::Statement::IfStmt(res))
     }
 
     fn expr(&mut self) -> Result<ast::Expression, Error> {

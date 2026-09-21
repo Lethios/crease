@@ -29,7 +29,11 @@ pub enum TokenKind {
 
     Out,
     Set,
+    If,
+    Else,
+    EndIf,
 
+    Colon,
     Newline,
     EOF,
 }

@@ -148,6 +148,8 @@ impl<'a> Lexer<'a> {
                     }
                 }
 
+                b':' => break Ok(self.construct_token(Colon, start_line, start_col)),
+
                 b'#' => {
                     while let Some(char) = self.peek() {
                         if char != b'\n' {
@@ -177,6 +179,9 @@ impl<'a> Lexer<'a> {
                     let kind = match s {
                         "set" => Set,
                         "out" => Out,
+                        "if" => If,
+                        "else" => Else,
+                        "endif" => EndIf,
                         "true" => True,
                         "false" => False,
                         _ => Identifier(s.to_string()),

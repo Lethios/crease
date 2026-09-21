@@ -3,18 +3,18 @@
 ### Current Grammar 
 ```ebnf
 program    = { statement } EOF;
-statement  = (assignment | print | if) (NEWLINE | EOF);
+statement  = ( assignment | print | if ) ( NEWLINE | EOF );
 assignment = "set" IDENTIFIER "=" expr;
 print      = "out" expr;
-if         = "if" expr ":" NEWLINE { statement } ["else" ":" NEWLINE { statement }] "endif";
+if         = "if" expr ":" NEWLINE { statement } [ "else" ":" NEWLINE { statement } ] "endif";
 expr       = or_expr;
 or_expr    = and_expr { "||" and_expr };
 and_expr   = equality { "&&" equality };
-equality   = comparison { ("==" | "!=") comparison };
-comparison = arithmetic { ("<" | ">" | "<=" | ">=") arithmetic };
-arithmetic = term { ("+" | "-") term };
-term       = factor { ("*" | "/" | "%") factor };
-factor     = NUMBER | BOOLEAN | IDENTIFIER | "(" expr ")" | ("+" | "-" | "!") factor;
+equality   = comparison { ( "==" | "!=" ) comparison };
+comparison = arithmetic { ( "<" | ">" | "<=" | ">=" ) arithmetic };
+arithmetic = term { ( "+" | "-" ) term };
+term       = factor { ( "*" | "/" | "%" ) factor };
+factor     = NUMBER | BOOLEAN | IDENTIFIER | "(" expr ")" | ( "+" | "-" | "!" ) factor;
 
 NUMBER     = [0-9]+(\.[0-9]+)?;
 BOOLEAN    = "true" | "false";

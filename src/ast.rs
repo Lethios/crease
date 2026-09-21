@@ -63,7 +63,15 @@ pub struct Assignment {
 pub struct Print(pub Expression);
 
 #[derive(Debug)]
+pub struct IfStmt {
+    pub if_cond: Expression,
+    pub if_stmt: Vec<Statement>,
+    pub else_stmt: Vec<Statement>,
+}
+
+#[derive(Debug)]
 pub enum Statement {
     Assignment(Assignment),
     Print(Print),
+    IfStmt(IfStmt),
 }

@@ -47,6 +47,7 @@ impl<'a> Lexer<'a> {
                                 // flag double decimal point 0..
                                 return Err(LexerError::new(
                                     UnexpectedCharacter,
+                                    format!("expected digit after `.`"),
                                     self.line,
                                     self.column,
                                 ));
@@ -61,7 +62,12 @@ impl<'a> Lexer<'a> {
 
                     if self.input.get(end) == Some(&b'.') {
                         // reject number ending with .
-                        return Err(LexerError::new(InvalidNumber, start_line, start_col));
+                        return Err(LexerError::new(
+                            InvalidNumber,
+                            format!("expected digit after `.`"),
+                            start_line,
+                            start_col,
+                        ));
                     }
 
                     let temp = str::from_utf8(&self.input[start..=end]).unwrap();
@@ -128,6 +134,7 @@ impl<'a> Lexer<'a> {
                     } else {
                         break Err(LexerError::new(
                             UnidentifiedCharacter,
+                            format!("expected `&&`"),
                             start_line,
                             start_col,
                         ));
@@ -142,6 +149,7 @@ impl<'a> Lexer<'a> {
                     } else {
                         break Err(LexerError::new(
                             UnidentifiedCharacter,
+                            format!("expected `||`"),
                             start_line,
                             start_col,
                         ));
@@ -201,6 +209,7 @@ impl<'a> Lexer<'a> {
                 _ => {
                     break Err(LexerError::new(
                         UnidentifiedCharacter,
+                        format!("unidentified character {:?}", char as char),
                         start_line,
                         start_col,
                     ));

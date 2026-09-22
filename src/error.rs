@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Error {
     Lex(LexerError),
     Parse(ParserError),
@@ -50,25 +50,31 @@ pub enum LexerErrorKind {
     InvalidNumber,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct LexerError {
     pub kind: LexerErrorKind,
+    pub msg: String,
     pub line: usize,
     pub column: usize,
 }
 
 impl LexerError {
-    pub fn new(kind: LexerErrorKind, line: usize, column: usize) -> Self {
-        Self { kind, line, column }
+    pub fn new(kind: LexerErrorKind, msg: String, line: usize, column: usize) -> Self {
+        Self {
+            kind,
+            msg,
+            line,
+            column,
+        }
     }
 }
 
 impl fmt::Display for LexerError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
-            LexerErrorKind::UnidentifiedCharacter => write!(f, "unidentified character"),
-            LexerErrorKind::UnexpectedCharacter => write!(f, "unexpected character"),
-            LexerErrorKind::InvalidNumber => write!(f, "invalid number"),
+            LexerErrorKind::UnidentifiedCharacter => write!(f, "{}", self.msg),
+            LexerErrorKind::UnexpectedCharacter => write!(f, "{}", self.msg),
+            LexerErrorKind::InvalidNumber => write!(f, "{}", self.msg),
         }
     }
 }
@@ -84,27 +90,33 @@ pub enum ParserErrorKind {
     MissingSemicolon,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ParserError {
     pub kind: ParserErrorKind,
+    pub msg: String,
     pub line: usize,
     pub column: usize,
 }
 
 impl ParserError {
-    pub fn new(kind: ParserErrorKind, line: usize, column: usize) -> Self {
-        Self { kind, line, column }
+    pub fn new(kind: ParserErrorKind, msg: String, line: usize, column: usize) -> Self {
+        Self {
+            kind,
+            msg,
+            line,
+            column,
+        }
     }
 }
 
 impl fmt::Display for ParserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
-            ParserErrorKind::MissingDelimiter => write!(f, "missing delimiter"),
-            ParserErrorKind::UnidentifiedToken => write!(f, "unidentified token"),
-            ParserErrorKind::ExpectedStatement => write!(f, "expected statement"),
-            ParserErrorKind::UnexpectedToken => write!(f, "unexpected token"),
-            ParserErrorKind::MissingSemicolon => write!(f, "missing semicolon"),
+            ParserErrorKind::MissingDelimiter => write!(f, "{}", self.msg),
+            ParserErrorKind::UnidentifiedToken => write!(f, "{}", self.msg),
+            ParserErrorKind::ExpectedStatement => write!(f, "{}", self.msg),
+            ParserErrorKind::UnexpectedToken => write!(f, "{}", self.msg),
+            ParserErrorKind::MissingSemicolon => write!(f, "{}", self.msg),
         }
     }
 }
@@ -118,23 +130,24 @@ pub enum RuntimeErrorKind {
     DivisionByZero,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct RuntimeError {
     pub kind: RuntimeErrorKind,
+    pub msg: String,
 }
 
 impl RuntimeError {
-    pub fn new(kind: RuntimeErrorKind) -> Self {
-        Self { kind }
+    pub fn new(kind: RuntimeErrorKind, msg: String) -> Self {
+        Self { kind, msg }
     }
 }
 
 impl fmt::Display for RuntimeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.kind {
-            RuntimeErrorKind::UndefinedVariable => write!(f, "undefined variable"),
-            RuntimeErrorKind::TypeMismatch => write!(f, "type mismatch"),
-            RuntimeErrorKind::DivisionByZero => write!(f, "division by zero"),
+            RuntimeErrorKind::UndefinedVariable => write!(f, "{}", self.msg),
+            RuntimeErrorKind::TypeMismatch => write!(f, "{}", self.msg),
+            RuntimeErrorKind::DivisionByZero => write!(f, "{}", self.msg),
         }
     }
 }

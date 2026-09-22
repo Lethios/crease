@@ -59,7 +59,13 @@ impl Interpreter {
                         }
                     }
                 }
-                _ => return Err(RuntimeError::new(TypeMismatch).into()),
+                _ => {
+                    return Err(RuntimeError::new(
+                        TypeMismatch,
+                        format!("expected bool in if condition"),
+                    )
+                    .into());
+                }
             },
         }
 
@@ -76,7 +82,11 @@ impl Interpreter {
 
             ast::Expression::Identifier(iden) => match self.global_var.get(&iden.0) {
                 Some(val) => Ok(*val),
-                None => Err(RuntimeError::new(UndefinedVariable).into()),
+                None => Err(RuntimeError::new(
+                    UndefinedVariable,
+                    format!("undefined variable `{}`", iden.0),
+                )
+                .into()),
             },
 
             ast::Expression::UnaryOperation(unary) => {
@@ -87,21 +97,33 @@ impl Interpreter {
                         if let Value::Number(_) = value {
                             Ok(value)
                         } else {
-                            Err(RuntimeError::new(TypeMismatch).into())
+                            Err(RuntimeError::new(
+                                TypeMismatch,
+                                format!("expected number for unary `+`, found {:?}", value),
+                            )
+                            .into())
                         }
                     }
                     ast::UnaryOperators::Sub => {
                         if let Value::Number(num) = value {
                             Ok(Value::Number(-num))
                         } else {
-                            Err(RuntimeError::new(TypeMismatch).into())
+                            Err(RuntimeError::new(
+                                TypeMismatch,
+                                format!("expected number for unary `-`, found {:?}", value),
+                            )
+                            .into())
                         }
                     }
                     ast::UnaryOperators::Not => {
                         if let Value::Boolean(bool) = value {
                             Ok(Value::Boolean(!bool))
                         } else {
-                            Err(RuntimeError::new(TypeMismatch).into())
+                            Err(RuntimeError::new(
+                                TypeMismatch,
+                                format!("expected bool for unary `!`, found {:?}", value),
+                            )
+                            .into())
                         }
                     }
                 }
@@ -116,7 +138,16 @@ impl Interpreter {
                         ast::BinaryOperators::Add => Ok(Value::Number(l + r)),
                         ast::BinaryOperators::Sub => Ok(Value::Number(l - r)),
                         ast::BinaryOperators::Mul => Ok(Value::Number(l * r)),
-                        ast::BinaryOperators::Div => Ok(Value::Number(l / r)),
+                        ast::BinaryOperators::Div => {
+                            if r.abs() <= ERROR {
+                                return Err(RuntimeError::new(
+                                    DivisionByZero,
+                                    format!("division by zero"),
+                                )
+                                .into());
+                            }
+                            Ok(Value::Number(l / r))
+                        }
                         ast::BinaryOperators::Mod => Ok(Value::Number(l % r)),
                         ast::BinaryOperators::LThan => Ok(Value::Boolean(l < r)),
                         ast::BinaryOperators::GThan => Ok(Value::Boolean(l > r)),
@@ -126,7 +157,11 @@ impl Interpreter {
                         ast::BinaryOperators::NotEquals => {
                             Ok(Value::Boolean((l - r).abs() > ERROR))
                         }
-                        _ => Err(RuntimeError::new(TypeMismatch).into()),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("invalid operator `{:?}` for numbers", binary.operator),
+                        )
+                        .into()),
                     }
                 } else if let (Value::Boolean(l), Value::Boolean(r)) = (&left, &right) {
                     match binary.operator {
@@ -134,10 +169,18 @@ impl Interpreter {
                         ast::BinaryOperators::NotEquals => Ok(Value::Boolean(l != r)),
                         ast::BinaryOperators::And => Ok(Value::Boolean(*l && *r)),
                         ast::BinaryOperators::Or => Ok(Value::Boolean(*l || *r)),
-                        _ => Err(RuntimeError::new(TypeMismatch).into()),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("invalid operator `{:?}` for bools", binary.operator),
+                        )
+                        .into()),
                     }
                 } else {
-                    Err(RuntimeError::new(TypeMismatch).into())
+                    Err(RuntimeError::new(
+                        TypeMismatch,
+                        format!("incompatible operands {:?} and {:?}", left, right),
+                    )
+                    .into())
                 }
             }
         }

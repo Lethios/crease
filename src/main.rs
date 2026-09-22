@@ -5,13 +5,12 @@ use crease::parser::Parser;
 
 fn main() {
     let src = r#"
-set x = 4
+set x = 1
 
-if 3 == 3:
-    set x = 2
-    set y = 3
-else:
-endif
+while x <= 5:
+    out x
+    set x = x + 1
+endwhile
 "#;
 
     let result = || -> Result<(), Error> {

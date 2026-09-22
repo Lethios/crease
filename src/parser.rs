@@ -1,10 +1,7 @@
-use crate::ast::{self, Expression};
+use crate::ast::{Expression, *};
 use crate::error::{Error, ParserError, ParserErrorKind::*};
 use crate::lexer::Lexer;
-use crate::token::{
-    Token,
-    TokenKind::{self, *},
-};
+use crate::token::{Token, TokenKind};
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -22,7 +19,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Vec<ast::Statement>, Error> {
+    pub fn parse(&mut self) -> Result<Vec<Statement>, Error> {
         self.program()
     }
 
@@ -40,11 +37,11 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
-    fn program(&mut self) -> Result<Vec<ast::Statement>, Error> {
+    fn program(&mut self) -> Result<Vec<Statement>, Error> {
         let mut statements = Vec::new();
         self.skip_newlines()?;
 
-        while self.curr_token.kind != EOF {
+        while self.curr_token.kind != TokenKind::EOF {
             statements.push(self.statement()?);
             self.skip_newlines()?;
         }
@@ -52,11 +49,12 @@ impl<'a> Parser<'a> {
         Ok(statements)
     }
 
-    fn statement(&mut self) -> Result<ast::Statement, Error> {
+    fn statement(&mut self) -> Result<Statement, Error> {
         let res = match self.curr_token.kind {
-            TokenKind::Set => self.assignment()?,
-            TokenKind::Out => self.print()?,
-            TokenKind::If => self.if_else()?,
+            TokenKind::Set => self.assign_stmt()?,
+            TokenKind::Out => self.print_stmt()?,
+            TokenKind::If => self.if_stmt()?,
+            TokenKind::While => self.while_stmt()?,
             _ => {
                 return Err(ParserError::new(
                     ExpectedStatement,
@@ -81,7 +79,7 @@ impl<'a> Parser<'a> {
         Ok(res)
     }
 
-    fn assignment(&mut self) -> Result<ast::Statement, Error> {
+    fn assign_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
         if !matches!(&self.curr_token.kind, TokenKind::Identifier(_)) {
@@ -110,20 +108,20 @@ impl<'a> Parser<'a> {
         self.consume()?;
 
         let expr = self.expr()?;
-        Ok(ast::Statement::Assignment(ast::Assignment {
-            iden: ast::Identifier(iden),
+        Ok(Statement::Assignment(Assignment {
+            iden: Identifier(iden),
             expr,
         }))
     }
 
-    fn print(&mut self) -> Result<ast::Statement, Error> {
+    fn print_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
         let expr = self.expr()?;
-        Ok(ast::Statement::Print(ast::Print(expr)))
+        Ok(Statement::Print(Print(expr)))
     }
 
-    fn if_else(&mut self) -> Result<ast::Statement, Error> {
+    fn if_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
         let if_cond = self.expr()?;
@@ -140,7 +138,7 @@ impl<'a> Parser<'a> {
         self.consume()?;
         self.skip_newlines()?;
 
-        let mut if_stmt = Vec::new();
+        let mut if_stmts = Vec::new();
         while self.curr_token.kind != TokenKind::Else && self.curr_token.kind != TokenKind::EndIf {
             if self.curr_token.kind == TokenKind::EOF {
                 return Err(ParserError::new(
@@ -151,12 +149,12 @@ impl<'a> Parser<'a> {
                 )
                 .into());
             }
-            if_stmt.push(self.statement()?);
+            if_stmts.push(self.statement()?);
             self.skip_newlines()?;
         }
 
-        let mut else_stmt = Vec::new();
-        if self.curr_token.kind == Else {
+        let mut else_stmts = Vec::new();
+        if self.curr_token.kind == TokenKind::Else {
             self.consume()?;
 
             if self.curr_token.kind != TokenKind::Colon {
@@ -181,7 +179,7 @@ impl<'a> Parser<'a> {
                     )
                     .into());
                 }
-                else_stmt.push(self.statement()?);
+                else_stmts.push(self.statement()?);
                 self.skip_newlines()?;
             }
         }
@@ -192,7 +190,7 @@ impl<'a> Parser<'a> {
                     UnidentifiedToken,
                     format!(
                         "expected `endif` to close `{}` statement",
-                        if else_stmt.is_empty() {
+                        if else_stmts.is_empty() {
                             "if"
                         } else {
                             "if else"
@@ -214,55 +212,99 @@ impl<'a> Parser<'a> {
         }
         self.consume()?;
 
-        let res = ast::IfStmt {
+        let res = IfStmt {
             if_cond,
-            if_stmt,
-            else_stmt,
+            if_stmts,
+            else_stmts,
         };
-        Ok(ast::Statement::IfStmt(res))
+        Ok(Statement::IfStmt(res))
     }
 
-    fn expr(&mut self) -> Result<ast::Expression, Error> {
+    fn while_stmt(&mut self) -> Result<Statement, Error> {
+        self.consume()?;
+
+        let while_cond = self.expr()?;
+
+        if self.curr_token.kind != TokenKind::Colon {
+            return Err(ParserError::new(
+                UnexpectedToken,
+                format!("expected `:`"),
+                self.curr_token.line,
+                self.curr_token.column,
+            )
+            .into());
+        }
+        self.consume()?;
+        self.skip_newlines()?;
+
+        let mut while_stmts = Vec::new();
+        while self.curr_token.kind != TokenKind::EndWhile {
+            if self.curr_token.kind == TokenKind::EOF {
+                return Err(ParserError::new(
+                    UnexpectedToken,
+                    format!("expected `endwhile` to close `while` statement"),
+                    self.curr_token.line,
+                    self.curr_token.column,
+                )
+                .into());
+            }
+            while_stmts.push(self.statement()?);
+            self.skip_newlines()?;
+        }
+        self.consume()?;
+
+        let res = WhileStmt {
+            while_cond,
+            while_stmts,
+        };
+        Ok(Statement::WhileStmt(res))
+    }
+
+    fn expr(&mut self) -> Result<Expression, Error> {
         self.or_expr()
     }
 
-    fn or_expr(&mut self) -> Result<ast::Expression, Error> {
+    fn or_expr(&mut self) -> Result<Expression, Error> {
         let mut lhs = self.and_expr()?;
 
-        while self.curr_token.kind == DPipe {
+        while self.curr_token.kind == TokenKind::DPipe {
             self.consume()?;
             let rhs = self.and_expr()?;
 
-            lhs = self.construct_bin_expr(ast::BinaryOperators::Or, lhs, rhs)
+            lhs = self.construct_bin_expr(BinaryOperators::Or, lhs, rhs)
         }
 
         Ok(lhs)
     }
 
-    fn and_expr(&mut self) -> Result<ast::Expression, Error> {
+    fn and_expr(&mut self) -> Result<Expression, Error> {
         let mut lhs = self.equality()?;
 
-        while self.curr_token.kind == DAmpersand {
+        while self.curr_token.kind == TokenKind::DAmpersand {
             self.consume()?;
             let rhs = self.equality()?;
 
-            lhs = self.construct_bin_expr(ast::BinaryOperators::And, lhs, rhs)
+            lhs = self.construct_bin_expr(BinaryOperators::And, lhs, rhs)
         }
 
         Ok(lhs)
     }
 
-    fn equality(&mut self) -> Result<ast::Expression, Error> {
+    fn equality(&mut self) -> Result<Expression, Error> {
         let mut lhs = self.comparison()?;
 
-        while self.curr_token.kind == DEquals || self.curr_token.kind == NotEquals {
+        while self.curr_token.kind == TokenKind::DEquals
+            || self.curr_token.kind == TokenKind::NotEquals
+        {
             let operator = self.consume()?;
             let rhs = self.comparison()?;
 
             match operator.kind {
-                DEquals => lhs = self.construct_bin_expr(ast::BinaryOperators::Equals, lhs, rhs),
-                NotEquals => {
-                    lhs = self.construct_bin_expr(ast::BinaryOperators::NotEquals, lhs, rhs)
+                TokenKind::DEquals => {
+                    lhs = self.construct_bin_expr(BinaryOperators::Equals, lhs, rhs)
+                }
+                TokenKind::NotEquals => {
+                    lhs = self.construct_bin_expr(BinaryOperators::NotEquals, lhs, rhs)
                 }
                 _ => {
                     return Err(ParserError::new(
@@ -279,26 +321,30 @@ impl<'a> Parser<'a> {
         Ok(lhs)
     }
 
-    fn comparison(&mut self) -> Result<ast::Expression, Error> {
+    fn comparison(&mut self) -> Result<Expression, Error> {
         let mut lhs = self.arithmetic()?;
 
-        while self.curr_token.kind == LAngle
-            || self.curr_token.kind == RAngle
-            || self.curr_token.kind == LAngleEquals
-            || self.curr_token.kind == RAngleEquals
+        while self.curr_token.kind == TokenKind::LAngle
+            || self.curr_token.kind == TokenKind::RAngle
+            || self.curr_token.kind == TokenKind::LAngleEquals
+            || self.curr_token.kind == TokenKind::RAngleEquals
         {
             let operator = self.consume()?;
             let rhs = self.arithmetic()?;
 
             match operator.kind {
-                LAngle => lhs = self.construct_bin_expr(ast::BinaryOperators::LThan, lhs, rhs),
-                RAngle => lhs = self.construct_bin_expr(ast::BinaryOperators::GThan, lhs, rhs),
-                LAngleEquals => {
-                    lhs = self.construct_bin_expr(ast::BinaryOperators::LThanEquals, lhs, rhs)
+                TokenKind::LAngle => {
+                    lhs = self.construct_bin_expr(BinaryOperators::LThan, lhs, rhs)
+                }
+                TokenKind::RAngle => {
+                    lhs = self.construct_bin_expr(BinaryOperators::GThan, lhs, rhs)
+                }
+                TokenKind::LAngleEquals => {
+                    lhs = self.construct_bin_expr(BinaryOperators::LThanEquals, lhs, rhs)
                 }
 
-                RAngleEquals => {
-                    lhs = self.construct_bin_expr(ast::BinaryOperators::GThanEquals, lhs, rhs)
+                TokenKind::RAngleEquals => {
+                    lhs = self.construct_bin_expr(BinaryOperators::GThanEquals, lhs, rhs)
                 }
                 _ => {
                     return Err(ParserError::new(
@@ -315,16 +361,16 @@ impl<'a> Parser<'a> {
         Ok(lhs)
     }
 
-    fn arithmetic(&mut self) -> Result<ast::Expression, Error> {
+    fn arithmetic(&mut self) -> Result<Expression, Error> {
         let mut lhs = self.term()?;
 
-        while self.curr_token.kind == Plus || self.curr_token.kind == Minus {
+        while self.curr_token.kind == TokenKind::Plus || self.curr_token.kind == TokenKind::Minus {
             let operator = self.consume()?;
             let rhs = self.term()?;
 
             match operator.kind {
-                Plus => lhs = self.construct_bin_expr(ast::BinaryOperators::Add, lhs, rhs),
-                Minus => lhs = self.construct_bin_expr(ast::BinaryOperators::Sub, lhs, rhs),
+                TokenKind::Plus => lhs = self.construct_bin_expr(BinaryOperators::Add, lhs, rhs),
+                TokenKind::Minus => lhs = self.construct_bin_expr(BinaryOperators::Sub, lhs, rhs),
                 _ => {
                     return Err(ParserError::new(
                         UnidentifiedToken,
@@ -340,20 +386,20 @@ impl<'a> Parser<'a> {
         Ok(lhs)
     }
 
-    fn term(&mut self) -> Result<ast::Expression, Error> {
+    fn term(&mut self) -> Result<Expression, Error> {
         let mut lhs = self.factor()?;
 
-        while self.curr_token.kind == Star
-            || self.curr_token.kind == Slash
-            || self.curr_token.kind == Percent
+        while self.curr_token.kind == TokenKind::Star
+            || self.curr_token.kind == TokenKind::Slash
+            || self.curr_token.kind == TokenKind::Percent
         {
             let operator = self.consume()?;
             let rhs = self.factor()?;
 
             match operator.kind {
-                Star => lhs = self.construct_bin_expr(ast::BinaryOperators::Mul, lhs, rhs),
-                Slash => lhs = self.construct_bin_expr(ast::BinaryOperators::Div, lhs, rhs),
-                Percent => lhs = self.construct_bin_expr(ast::BinaryOperators::Mod, lhs, rhs),
+                TokenKind::Star => lhs = self.construct_bin_expr(BinaryOperators::Mul, lhs, rhs),
+                TokenKind::Slash => lhs = self.construct_bin_expr(BinaryOperators::Div, lhs, rhs),
+                TokenKind::Percent => lhs = self.construct_bin_expr(BinaryOperators::Mod, lhs, rhs),
                 _ => {
                     return Err(ParserError::new(
                         UnidentifiedToken,
@@ -369,31 +415,31 @@ impl<'a> Parser<'a> {
         Ok(lhs)
     }
 
-    fn factor(&mut self) -> Result<ast::Expression, Error> {
+    fn factor(&mut self) -> Result<Expression, Error> {
         let token = self.consume()?;
 
         match token.kind {
-            Number(n) => {
-                let res = ast::Number(n);
-                Ok(ast::Expression::Number(res))
+            TokenKind::Number(n) => {
+                let res = Number(n);
+                Ok(Expression::Number(res))
             }
-            True => {
-                let res = ast::Boolean(true);
-                Ok(ast::Expression::Boolean(res))
+            TokenKind::True => {
+                let res = Boolean(true);
+                Ok(Expression::Boolean(res))
             }
-            False => {
-                let res = ast::Boolean(false);
-                Ok(ast::Expression::Boolean(res))
+            TokenKind::False => {
+                let res = Boolean(false);
+                Ok(Expression::Boolean(res))
             }
-            Identifier(i) => {
-                let res = ast::Identifier(i);
-                Ok(ast::Expression::Identifier(res))
+            TokenKind::Identifier(i) => {
+                let res = Identifier(i);
+                Ok(Expression::Identifier(res))
             }
-            LParen => {
+            TokenKind::LParen => {
                 let res = self.expr()?;
 
                 let rparen = self.consume()?;
-                if rparen.kind != RParen {
+                if rparen.kind != TokenKind::RParen {
                     return Err(ParserError::new(
                         MissingDelimiter,
                         format!("missing `)` after `(`"),
@@ -405,26 +451,26 @@ impl<'a> Parser<'a> {
 
                 Ok(res)
             }
-            Plus => {
-                let res = ast::UnaryOperation {
-                    operator: ast::UnaryOperators::Add,
+            TokenKind::Plus => {
+                let res = UnaryOperation {
+                    operator: UnaryOperators::Add,
                     operand: Box::new(self.factor()?),
                 };
-                Ok(ast::Expression::UnaryOperation(res))
+                Ok(Expression::UnaryOperation(res))
             }
-            Minus => {
-                let res = ast::UnaryOperation {
-                    operator: ast::UnaryOperators::Sub,
+            TokenKind::Minus => {
+                let res = UnaryOperation {
+                    operator: UnaryOperators::Sub,
                     operand: Box::new(self.factor()?),
                 };
-                Ok(ast::Expression::UnaryOperation(res))
+                Ok(Expression::UnaryOperation(res))
             }
-            Exclaim => {
-                let res = ast::UnaryOperation {
-                    operator: ast::UnaryOperators::Not,
+            TokenKind::Exclaim => {
+                let res = UnaryOperation {
+                    operator: UnaryOperators::Not,
                     operand: Box::new(self.factor()?),
                 };
-                Ok(ast::Expression::UnaryOperation(res))
+                Ok(Expression::UnaryOperation(res))
             }
             _ => Err(ParserError::new(
                 UnidentifiedToken,
@@ -438,16 +484,16 @@ impl<'a> Parser<'a> {
 
     fn construct_bin_expr(
         &self,
-        operator: ast::BinaryOperators,
+        operator: BinaryOperators,
         lhs: Expression,
         rhs: Expression,
-    ) -> ast::Expression {
-        let res = ast::BinaryOperation {
+    ) -> Expression {
+        let res = BinaryOperation {
             operator,
             left: Box::new(lhs),
             right: Box::new(rhs),
         };
 
-        ast::Expression::BinaryOperation(res)
+        Expression::BinaryOperation(res)
     }
 }

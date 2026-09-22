@@ -33,28 +33,28 @@ impl Interpreter {
 
     fn statement(&mut self, stmt: &ast::Statement) -> Result<(), Error> {
         match stmt {
-            ast::Statement::Assignment(assign) => {
-                let key = assign.iden.0.clone();
-                let val = self.expression(&assign.expr)?;
+            ast::Statement::Assignment(assign_stmt) => {
+                let key = assign_stmt.iden.0.clone();
+                let val = self.expression(&assign_stmt.expr)?;
 
                 self.global_var.insert(key, val);
             }
-            ast::Statement::Print(print) => {
-                let val = self.expression(&print.0)?;
+            ast::Statement::Print(print_stmt) => {
+                let val = self.expression(&print_stmt.0)?;
 
                 match val {
                     Value::Number(num) => println!("{}", num),
                     Value::Boolean(bool) => println!("{}", bool),
                 }
             }
-            ast::Statement::IfStmt(if_else) => match self.expression(&if_else.if_cond)? {
+            ast::Statement::IfStmt(if_stmt) => match self.expression(&if_stmt.if_cond)? {
                 Value::Boolean(bool) => {
                     if bool {
-                        for stmt in &if_else.if_stmt {
+                        for stmt in &if_stmt.if_stmts {
                             self.statement(stmt)?;
                         }
                     } else {
-                        for stmt in &if_else.else_stmt {
+                        for stmt in &if_stmt.else_stmts {
                             self.statement(stmt)?;
                         }
                     }
@@ -62,9 +62,30 @@ impl Interpreter {
                 _ => {
                     return Err(RuntimeError::new(
                         TypeMismatch,
-                        format!("expected bool in if condition"),
+                        format!("expected bool in `if` condition"),
                     )
                     .into());
+                }
+            },
+            ast::Statement::WhileStmt(while_stmt) => loop {
+                match self.expression(&while_stmt.while_cond)? {
+                    Value::Boolean(true) => {
+                        for stmt in &while_stmt.while_stmts {
+                            self.statement(stmt)?;
+                        }
+                    }
+
+                    Value::Boolean(false) => {
+                        break;
+                    }
+
+                    _ => {
+                        return Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("expected bool in `while` condition"),
+                        )
+                        .into());
+                    }
                 }
             },
         }

@@ -190,6 +190,8 @@ impl<'a> Lexer<'a> {
                         "if" => If,
                         "else" => Else,
                         "endif" => EndIf,
+                        "while" => While,
+                        "endwhile" => EndWhile,
                         "true" => True,
                         "false" => False,
                         _ => Identifier(s.to_string()),

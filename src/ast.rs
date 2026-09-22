@@ -65,8 +65,14 @@ pub struct Print(pub Expression);
 #[derive(Debug)]
 pub struct IfStmt {
     pub if_cond: Expression,
-    pub if_stmt: Vec<Statement>,
-    pub else_stmt: Vec<Statement>,
+    pub if_stmts: Vec<Statement>,
+    pub else_stmts: Vec<Statement>,
+}
+
+#[derive(Debug)]
+pub struct WhileStmt {
+    pub while_cond: Expression,
+    pub while_stmts: Vec<Statement>,
 }
 
 #[derive(Debug)]
@@ -74,4 +80,5 @@ pub enum Statement {
     Assignment(Assignment),
     Print(Print),
     IfStmt(IfStmt),
+    WhileStmt(WhileStmt),
 }

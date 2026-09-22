@@ -32,6 +32,8 @@ pub enum TokenKind {
     If,
     Else,
     EndIf,
+    While,
+    EndWhile,
 
     Colon,
     Newline,

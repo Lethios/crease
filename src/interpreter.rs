@@ -5,10 +5,11 @@ use crate::{
     error::{Error, RuntimeError, RuntimeErrorKind::*},
 };
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Number(f64),
     Boolean(bool),
+    String(std::string::String),
 }
 
 #[derive(Default, Debug)]
@@ -44,12 +45,13 @@ impl Interpreter {
 
                 match val {
                     Value::Number(num) => println!("{}", num),
-                    Value::Boolean(bool) => println!("{}", bool),
+                    Value::Boolean(boolean) => println!("{}", boolean),
+                    Value::String(string) => println!("{}", string),
                 }
             }
             ast::Statement::IfStmt(if_stmt) => match self.expression(&if_stmt.if_cond)? {
-                Value::Boolean(bool) => {
-                    if bool {
+                Value::Boolean(boolean) => {
+                    if boolean {
                         for stmt in &if_stmt.if_stmts {
                             self.statement(stmt)?;
                         }
@@ -62,7 +64,7 @@ impl Interpreter {
                 _ => {
                     return Err(RuntimeError::new(
                         TypeMismatch,
-                        format!("expected bool in `if` condition"),
+                        format!("expected boolean in `if` condition"),
                     )
                     .into());
                 }
@@ -82,7 +84,7 @@ impl Interpreter {
                     _ => {
                         return Err(RuntimeError::new(
                             TypeMismatch,
-                            format!("expected bool in `while` condition"),
+                            format!("expected boolean in `while` condition"),
                         )
                         .into());
                     }
@@ -99,10 +101,12 @@ impl Interpreter {
         match expr {
             ast::Expression::Number(num) => Ok(Value::Number(num.0)),
 
-            ast::Expression::Boolean(bool) => Ok(Value::Boolean(bool.0)),
+            ast::Expression::Boolean(boolean) => Ok(Value::Boolean(boolean.0)),
+
+            ast::Expression::String(string) => Ok(Value::String(string.0.to_owned())),
 
             ast::Expression::Identifier(iden) => match self.global_var.get(&iden.0) {
-                Some(val) => Ok(*val),
+                Some(val) => Ok(val.to_owned()),
                 None => Err(RuntimeError::new(
                     UndefinedVariable,
                     format!("undefined variable `{}`", iden.0),
@@ -137,12 +141,12 @@ impl Interpreter {
                         }
                     }
                     ast::UnaryOperators::Not => {
-                        if let Value::Boolean(bool) = value {
-                            Ok(Value::Boolean(!bool))
+                        if let Value::Boolean(boolean) = value {
+                            Ok(Value::Boolean(!boolean))
                         } else {
                             Err(RuntimeError::new(
                                 TypeMismatch,
-                                format!("expected bool for unary `!`, found {:?}", value),
+                                format!("expected boolean for unary `!`, found {:?}", value),
                             )
                             .into())
                         }
@@ -192,7 +196,18 @@ impl Interpreter {
                         ast::BinaryOperators::Or => Ok(Value::Boolean(*l || *r)),
                         _ => Err(RuntimeError::new(
                             TypeMismatch,
-                            format!("invalid operator `{:?}` for bools", binary.operator),
+                            format!("invalid operator `{:?}` for booleans", binary.operator),
+                        )
+                        .into()),
+                    }
+                } else if let (Value::String(l), Value::String(r)) = (&left, &right) {
+                    match binary.operator {
+                        ast::BinaryOperators::Add => Ok(Value::String(format!("{l}{r}"))),
+                        ast::BinaryOperators::Equals => Ok(Value::Boolean(l.eq(r))),
+                        ast::BinaryOperators::NotEquals => Ok(Value::Boolean(l.ne(r))),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("invalid operator `{:?}` for strings", binary.operator),
                         )
                         .into()),
                     }

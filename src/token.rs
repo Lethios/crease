@@ -3,6 +3,7 @@ pub enum TokenKind {
     Number(f64),
     True,
     False,
+    String(String),
     Identifier(String),
 
     Plus,

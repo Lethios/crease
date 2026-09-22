@@ -48,6 +48,7 @@ pub enum LexerErrorKind {
     UnidentifiedCharacter,
     UnexpectedCharacter,
     InvalidNumber,
+    InvalidString,
 }
 
 #[derive(Debug, Clone)]
@@ -75,6 +76,7 @@ impl fmt::Display for LexerError {
             LexerErrorKind::UnidentifiedCharacter => write!(f, "{}", self.msg),
             LexerErrorKind::UnexpectedCharacter => write!(f, "{}", self.msg),
             LexerErrorKind::InvalidNumber => write!(f, "{}", self.msg),
+            LexerErrorKind::InvalidString => write!(f, "{}", self.msg),
         }
     }
 }

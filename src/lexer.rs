@@ -158,6 +158,40 @@ impl<'a> Lexer<'a> {
 
                 b':' => break Ok(self.construct_token(Colon, start_line, start_col)),
 
+                b'"' => {
+                    // store idx of char after "
+                    let start = self.idx;
+                    let mut end = self.idx;
+
+                    while let Some(char) = self.peek() {
+                        if char == b'"' {
+                            end = self.idx;
+                            break;
+                        } else {
+                            self.consume();
+                        }
+                    }
+
+                    if let Some(char) = self.peek()
+                        && char == b'"'
+                    {
+                        self.consume();
+                    } else {
+                        break Err(LexerError::new(
+                            InvalidString,
+                            format!("unterminated string"),
+                            start_line,
+                            start_col,
+                        )
+                        .into());
+                    }
+
+                    let temp = str::from_utf8(&self.input[start..end]).unwrap();
+                    let string = temp.to_string();
+
+                    break Ok(self.construct_token(String(string), start_line, start_col));
+                }
+
                 b'#' => {
                     while let Some(char) = self.peek() {
                         if char != b'\n' {

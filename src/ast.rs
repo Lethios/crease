@@ -5,7 +5,10 @@ pub struct Number(pub f64);
 pub struct Boolean(pub bool);
 
 #[derive(Debug)]
-pub struct Identifier(pub String);
+pub struct String(pub std::string::String);
+
+#[derive(Debug)]
+pub struct Identifier(pub std::string::String);
 
 #[derive(Debug)]
 pub enum UnaryOperators {
@@ -48,6 +51,7 @@ pub struct BinaryOperation {
 pub enum Expression {
     Number(Number),
     Boolean(Boolean),
+    String(String),
     Identifier(Identifier),
     UnaryOperation(UnaryOperation),
     BinaryOperation(BinaryOperation),

@@ -5,12 +5,7 @@ use crease::parser::Parser;
 
 fn main() {
     let src = r#"
-set x = 1
-
-while x <= 5:
-    out x
-    set x = x + 1
-endwhile
+out "a" + "b" + "c" + "d" + " " + "e" == "abcde"
 "#;
 
     let result = || -> Result<(), Error> {

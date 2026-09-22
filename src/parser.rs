@@ -431,6 +431,10 @@ impl<'a> Parser<'a> {
                 let res = Boolean(false);
                 Ok(Expression::Boolean(res))
             }
+            TokenKind::String(s) => {
+                let res = String(s);
+                Ok(Expression::String(res))
+            }
             TokenKind::Identifier(i) => {
                 let res = Identifier(i);
                 Ok(Expression::Identifier(res))

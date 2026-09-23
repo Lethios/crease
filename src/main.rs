@@ -3,9 +3,9 @@ use crease::interpreter::Interpreter;
 use crease::lexer::Lexer;
 use crease::parser::Parser;
 
-fn main() -> Result<(), Error> {
+fn run() -> Result<(), Error> {
     let args: Vec<String> = std::env::args().collect();
-    
+
     let src = std::fs::read_to_string(&args[1]).unwrap();
 
     let lexer = Lexer::new(&src);
@@ -16,4 +16,10 @@ fn main() -> Result<(), Error> {
     interpreter.interpret(&program)?;
 
     Ok(())
+}
+
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("{e}");
+    }
 }

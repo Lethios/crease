@@ -26,4 +26,4 @@ BOOLEAN     = "true" | "false";
 STRING      = '"[^"]*"';
 ```
 
-- TODO: Fix error col marker, add line numbers and additional data, standardize var names, error name revamp, crate import name fixes, token name to literal char name, code cleanup.
+- TODO: end stmt error fix, standardize var names, error name revamp, crate import name fixes, token name to literal char name, code cleanup.

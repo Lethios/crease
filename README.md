@@ -19,11 +19,11 @@ arithmetic  = term { ( "+" | "-" ) term };
 term        = factor { ( "*" | "/" | "%" ) factor };
 factor      = NUMBER | BOOLEAN | STRING | IDENTIFIER | "(" expr ")" | ( "+" | "-" | "!" ) factor;
 
+COMMENT     = "#" [^\n]*;
+IDENTIFIER  = [a-zA-Z_][a-zA-Z0-9_]*;
 NUMBER      = [0-9]+(\.[0-9]+)?;
 BOOLEAN     = "true" | "false";
-STRING      = "[^\""]*";
-IDENTIFIER  = [a-zA-Z_][a-zA-Z0-9_]*;
-COMMENT     = "#" [^\n]*;
+STRING      = '"[^"]*"';
 ```
 
 - TODO: Fix error col marker, add line numbers and additional data, standardize var names, error name revamp, crate import name fixes, token name to literal char name, code cleanup.

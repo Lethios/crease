@@ -3,26 +3,17 @@ use crease::interpreter::Interpreter;
 use crease::lexer::Lexer;
 use crease::parser::Parser;
 
-fn main() {
-    let src = r#"
-in x
+fn main() -> Result<(), Error> {
+    let args: Vec<String> = std::env::args().collect();
+    
+    let src = std::fs::read_to_string(&args[1]).unwrap();
 
-if x == "abc":
-    out 0
-else:
-    out 1
-endif
-"#;
+    let lexer = Lexer::new(&src);
+    let mut parser = Parser::new(lexer)?;
+    let program = parser.parse()?;
+    let mut interpreter = Interpreter::new();
 
-    let result = || -> Result<(), Error> {
-        let lexer = Lexer::new(src);
-        let mut parser = Parser::new(lexer)?;
-        let program = parser.parse()?;
-        let mut interpreter = Interpreter::new();
-        interpreter.interpret(&program)
-    };
+    interpreter.interpret(&program)?;
 
-    if let Err(e) = result() {
-        eprintln!("{e}");
-    }
+    Ok(())
 }

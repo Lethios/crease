@@ -242,6 +242,7 @@ impl<'a> Lexer<'a> {
 
                     let kind = match s {
                         "set" => Set,
+                        "del" => Del,
                         "out" => Out,
                         "if" => If,
                         "else" => Else,

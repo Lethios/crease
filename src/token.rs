@@ -30,6 +30,7 @@ pub enum TokenKind {
 
     Out,
     Set,
+    Del,
     If,
     Else,
     EndIf,

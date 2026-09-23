@@ -64,6 +64,9 @@ pub struct Assignment {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct Delete(pub Identifier);
+
+#[derive(Debug, PartialEq)]
 pub struct Print(pub Expression);
 
 #[derive(Debug, PartialEq)]
@@ -82,6 +85,7 @@ pub struct WhileStmt {
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Assignment(Assignment),
+    Delete(Delete),
     Print(Print),
     IfStmt(IfStmt),
     WhileStmt(WhileStmt),

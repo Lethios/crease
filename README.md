@@ -5,6 +5,7 @@
 program     = { statement } EOF;
 statement   = ( assign_stmt | print_stmt | if_stmt | while_stmt ) ( NEWLINE | EOF );
 assign_stmt = "set" IDENTIFIER "=" expr;
+delete_stmt = "del" IDENTIFIER;
 print_stmt  = "out" expr;
 if_stmt     = "if" expr ":" NEWLINE { statement } [ "else" ":" NEWLINE { statement } ] "endif";
 while_stmt  = "while" expr ":" NEWLINE { statement } "endwhile";

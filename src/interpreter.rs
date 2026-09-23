@@ -35,10 +35,15 @@ impl Interpreter {
     fn statement(&mut self, stmt: &ast::Statement) -> Result<(), Error> {
         match stmt {
             ast::Statement::Assignment(assign_stmt) => {
-                let key = assign_stmt.iden.0.clone();
+                let key = assign_stmt.iden.0.to_owned();
                 let val = self.expression(&assign_stmt.expr)?;
 
                 self.global_var.insert(key, val);
+            }
+            ast::Statement::Delete(delete_stmt) => {
+                let key = &delete_stmt.0.0;
+
+                self.global_var.remove(key);
             }
             ast::Statement::Print(print_stmt) => {
                 let val = self.expression(&print_stmt.0)?;

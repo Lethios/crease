@@ -64,7 +64,7 @@ impl Interpreter {
                 _ => {
                     return Err(RuntimeError::new(
                         TypeMismatch,
-                        format!("expected boolean in `if` condition"),
+                        ("expected boolean in `if` condition").to_string(),
                     )
                     .into());
                 }
@@ -84,7 +84,7 @@ impl Interpreter {
                     _ => {
                         return Err(RuntimeError::new(
                             TypeMismatch,
-                            format!("expected boolean in `while` condition"),
+                            ("expected boolean in `while` condition").to_string(),
                         )
                         .into());
                     }
@@ -156,6 +156,64 @@ impl Interpreter {
 
             ast::Expression::BinaryOperation(binary) => {
                 let left = self.expression(&binary.left)?;
+
+                // shortcircuit and/or
+                match binary.operator {
+                    ast::BinaryOperators::And => match left {
+                        Value::Boolean(true) => {
+                            let right = self.expression(&binary.right)?;
+                            match right {
+                                Value::Boolean(true) | Value::Boolean(false) => return Ok(right),
+                                _ => {
+                                    return Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        format!(
+                                            "incompatible operands `{:?}` and `{:?}`",
+                                            left, right
+                                        ),
+                                    )
+                                    .into());
+                                }
+                            }
+                        }
+                        Value::Boolean(false) => return Ok(left),
+                        _ => {
+                            return Err(RuntimeError::new(
+                                TypeMismatch,
+                                format!("invalid operator `{:?}` for booleans", binary.operator),
+                            )
+                            .into());
+                        }
+                    },
+                    ast::BinaryOperators::Or => match left {
+                        Value::Boolean(true) => return Ok(left),
+                        Value::Boolean(false) => {
+                            let right = self.expression(&binary.right)?;
+                            match right {
+                                Value::Boolean(true) | Value::Boolean(false) => return Ok(right),
+                                _ => {
+                                    return Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        format!(
+                                            "incompatible operands `{:?}` and `{:?}`",
+                                            left, right
+                                        ),
+                                    )
+                                    .into());
+                                }
+                            }
+                        }
+                        _ => {
+                            return Err(RuntimeError::new(
+                                TypeMismatch,
+                                format!("invalid operator `{:?}` for booleans", binary.operator),
+                            )
+                            .into());
+                        }
+                    },
+                    _ => {}
+                }
+
                 let right = self.expression(&binary.right)?;
 
                 if let (Value::Number(l), Value::Number(r)) = (&left, &right) {
@@ -167,7 +225,7 @@ impl Interpreter {
                             if r.abs() <= ERROR {
                                 return Err(RuntimeError::new(
                                     DivisionByZero,
-                                    format!("division by zero"),
+                                    ("division by zero").to_string(),
                                 )
                                 .into());
                             }
@@ -192,8 +250,6 @@ impl Interpreter {
                     match binary.operator {
                         ast::BinaryOperators::Equals => Ok(Value::Boolean(l == r)),
                         ast::BinaryOperators::NotEquals => Ok(Value::Boolean(l != r)),
-                        ast::BinaryOperators::And => Ok(Value::Boolean(*l && *r)),
-                        ast::BinaryOperators::Or => Ok(Value::Boolean(*l || *r)),
                         _ => Err(RuntimeError::new(
                             TypeMismatch,
                             format!("invalid operator `{:?}` for booleans", binary.operator),
@@ -214,7 +270,7 @@ impl Interpreter {
                 } else {
                     Err(RuntimeError::new(
                         TypeMismatch,
-                        format!("incompatible operands {:?} and {:?}", left, right),
+                        format!("incompatible operands `{:?}` and `{:?}`", left, right),
                     )
                     .into())
                 }

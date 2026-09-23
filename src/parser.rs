@@ -58,7 +58,7 @@ impl<'a> Parser<'a> {
             _ => {
                 return Err(ParserError::new(
                     ExpectedStatement,
-                    format!("expected statement"),
+                    ("expected statement").to_string(),
                     self.curr_token.line,
                     self.curr_token.column,
                 )
@@ -69,7 +69,7 @@ impl<'a> Parser<'a> {
         if self.curr_token.kind != TokenKind::Newline && self.curr_token.kind != TokenKind::EOF {
             return Err(ParserError::new(
                 UnexpectedToken,
-                format!("expected newline or end of file after statement"),
+                ("expected newline or end of file after statement").to_string(),
                 self.curr_token.line,
                 self.curr_token.column,
             )
@@ -85,7 +85,7 @@ impl<'a> Parser<'a> {
         if !matches!(&self.curr_token.kind, TokenKind::Identifier(_)) {
             return Err(ParserError::new(
                 UnexpectedToken,
-                format!("expected identifier after `set`"),
+                ("expected identifier after `set`").to_string(),
                 self.curr_token.line,
                 self.curr_token.column,
             )
@@ -93,13 +93,21 @@ impl<'a> Parser<'a> {
         }
         let iden = match self.consume()?.kind {
             TokenKind::Identifier(s) => s,
-            _ => unreachable!(),
+            _ => {
+                return Err(ParserError::new(
+                    UnexpectedToken,
+                    "expected identifier".to_string(),
+                    self.curr_token.line,
+                    self.curr_token.column,
+                )
+                .into());
+            }
         };
 
         if self.curr_token.kind != TokenKind::Equals {
             return Err(ParserError::new(
                 UnexpectedToken,
-                format!("expected `=`"),
+                ("expected `=`").to_string(),
                 self.curr_token.line,
                 self.curr_token.column,
             )
@@ -129,7 +137,7 @@ impl<'a> Parser<'a> {
         if self.curr_token.kind != TokenKind::Colon {
             return Err(ParserError::new(
                 UnidentifiedToken,
-                format!("expected `:`"),
+                ("expected `:`").to_string(),
                 self.curr_token.line,
                 self.curr_token.column,
             )
@@ -143,7 +151,7 @@ impl<'a> Parser<'a> {
             if self.curr_token.kind == TokenKind::EOF {
                 return Err(ParserError::new(
                     UnexpectedToken,
-                    format!("expected `endif` to close `if` statement"),
+                    ("expected `endif` to close `if` statement").to_string(),
                     self.curr_token.line,
                     self.curr_token.column,
                 )
@@ -160,7 +168,7 @@ impl<'a> Parser<'a> {
             if self.curr_token.kind != TokenKind::Colon {
                 return Err(ParserError::new(
                     UnidentifiedToken,
-                    format!("expected `:`"),
+                    ("expected `:`").to_string(),
                     self.curr_token.line,
                     self.curr_token.column,
                 )
@@ -173,7 +181,7 @@ impl<'a> Parser<'a> {
                 if self.curr_token.kind == TokenKind::EOF {
                     return Err(ParserError::new(
                         UnexpectedToken,
-                        format!("expected `endif` to close `if else` statement"),
+                        ("expected `endif` to close `if else` statement").to_string(),
                         self.curr_token.line,
                         self.curr_token.column,
                     )
@@ -228,7 +236,7 @@ impl<'a> Parser<'a> {
         if self.curr_token.kind != TokenKind::Colon {
             return Err(ParserError::new(
                 UnexpectedToken,
-                format!("expected `:`"),
+                ("expected `:`").to_string(),
                 self.curr_token.line,
                 self.curr_token.column,
             )
@@ -242,7 +250,7 @@ impl<'a> Parser<'a> {
             if self.curr_token.kind == TokenKind::EOF {
                 return Err(ParserError::new(
                     UnexpectedToken,
-                    format!("expected `endwhile` to close `while` statement"),
+                    ("expected `endwhile` to close `while` statement").to_string(),
                     self.curr_token.line,
                     self.curr_token.column,
                 )
@@ -309,7 +317,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     return Err(ParserError::new(
                         UnidentifiedToken,
-                        format!("expected either `==` or `!=`"),
+                        ("expected either `==` or `!=`").to_string(),
                         operator.line,
                         operator.column,
                     )
@@ -349,7 +357,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     return Err(ParserError::new(
                         UnidentifiedToken,
-                        format!("expected either `<`, `>`, `<=` or `>=`"),
+                        ("expected either `<`, `>`, `<=` or `>=`").to_string(),
                         operator.line,
                         operator.column,
                     )
@@ -374,7 +382,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     return Err(ParserError::new(
                         UnidentifiedToken,
-                        format!("expected either `+` or `-`"),
+                        ("expected either `+` or `-`").to_string(),
                         operator.line,
                         operator.column,
                     )
@@ -403,7 +411,7 @@ impl<'a> Parser<'a> {
                 _ => {
                     return Err(ParserError::new(
                         UnidentifiedToken,
-                        format!("expecter either `*`, `/` or `%`"),
+                        ("expected either `*`, `/` or `%`").to_string(),
                         operator.line,
                         operator.column,
                     )
@@ -446,7 +454,7 @@ impl<'a> Parser<'a> {
                 if rparen.kind != TokenKind::RParen {
                     return Err(ParserError::new(
                         MissingDelimiter,
-                        format!("missing `)` after `(`"),
+                        ("missing `)` after `(`").to_string(),
                         rparen.line,
                         rparen.column,
                     )
@@ -478,7 +486,7 @@ impl<'a> Parser<'a> {
             }
             _ => Err(ParserError::new(
                 UnidentifiedToken,
-                format!("expected expression"),
+                ("expected expression").to_string(),
                 token.line,
                 token.column,
             )

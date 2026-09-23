@@ -47,7 +47,7 @@ impl<'a> Lexer<'a> {
                                 // flag double decimal point 0..
                                 return Err(LexerError::new(
                                     UnexpectedCharacter,
-                                    format!("expected digit after `.`"),
+                                    ("expected digit after `.`").to_string(),
                                     self.line,
                                     self.column,
                                 ));
@@ -64,13 +64,24 @@ impl<'a> Lexer<'a> {
                         // reject number ending with .
                         return Err(LexerError::new(
                             InvalidNumber,
-                            format!("expected digit after `.`"),
+                            ("expected digit after `.`").to_string(),
                             start_line,
                             start_col,
                         ));
                     }
 
+                    #[expect(
+                        clippy::unwrap_in_result,
+                        clippy::unwrap_used,
+                        clippy::indexing_slicing,
+                        reason = "&str guarantees utf8"
+                    )]
                     let temp = str::from_utf8(&self.input[start..=end]).unwrap();
+                    #[expect(
+                        clippy::unwrap_used,
+                        clippy::unwrap_in_result,
+                        reason = "valid f64 is guaranteed"
+                    )]
                     let num = temp.parse::<f64>().unwrap();
 
                     break Ok(self.construct_token(Number(num), start_line, start_col));
@@ -134,7 +145,7 @@ impl<'a> Lexer<'a> {
                     } else {
                         break Err(LexerError::new(
                             UnidentifiedCharacter,
-                            format!("expected `&&`"),
+                            ("expected `&&`").to_string(),
                             start_line,
                             start_col,
                         ));
@@ -149,7 +160,7 @@ impl<'a> Lexer<'a> {
                     } else {
                         break Err(LexerError::new(
                             UnidentifiedCharacter,
-                            format!("expected `||`"),
+                            ("expected `||`").to_string(),
                             start_line,
                             start_col,
                         ));
@@ -179,13 +190,18 @@ impl<'a> Lexer<'a> {
                     } else {
                         break Err(LexerError::new(
                             InvalidString,
-                            format!("unterminated string"),
+                            ("unterminated string").to_string(),
                             start_line,
                             start_col,
-                        )
-                        .into());
+                        ));
                     }
 
+                    #[expect(
+                        clippy::unwrap_in_result,
+                        clippy::unwrap_used,
+                        clippy::indexing_slicing,
+                        reason = "&str guarantees utf8"
+                    )]
                     let temp = str::from_utf8(&self.input[start..end]).unwrap();
                     let string = temp.to_string();
 
@@ -216,6 +232,12 @@ impl<'a> Lexer<'a> {
                     }
 
                     let end = self.idx - 1;
+                    #[expect(
+                        clippy::unwrap_in_result,
+                        clippy::unwrap_used,
+                        clippy::indexing_slicing,
+                        reason = "&str guarantees utf8"
+                    )]
                     let s = str::from_utf8(&self.input[start..=end]).unwrap();
 
                     let kind = match s {

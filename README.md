@@ -1,11 +1,12 @@
-# crease (WIP Language)
+# crease 
 
 ### Current Grammar 
 ```ebnf
 program     = { statement } EOF;
-statement   = ( assign_stmt | print_stmt | if_stmt | while_stmt ) ( NEWLINE | EOF );
+statement   = ( assign_stmt | delete_stmt | input_stmt | print_stmt | if_stmt | while_stmt ) ( NEWLINE | EOF );
 assign_stmt = "set" IDENTIFIER "=" expr;
 delete_stmt = "del" IDENTIFIER;
+input_stmt  = "in" IDENTIFIER;
 print_stmt  = "out" expr;
 if_stmt     = "if" expr ":" NEWLINE { statement } [ "else" ":" NEWLINE { statement } ] "endif";
 while_stmt  = "while" expr ":" NEWLINE { statement } "endwhile";
@@ -20,7 +21,7 @@ factor      = NUMBER | BOOLEAN | STRING | IDENTIFIER | "(" expr ")" | ( "+" | "-
 
 NUMBER      = [0-9]+(\.[0-9]+)?;
 BOOLEAN     = "true" | "false";
-STRING      = "[^"]*";
+STRING      = "[^\""]*";
 IDENTIFIER  = [a-zA-Z_][a-zA-Z0-9_]*;
 COMMENT     = "#" [^\n]*;
 ```

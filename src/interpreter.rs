@@ -45,6 +45,14 @@ impl Interpreter {
 
                 self.global_var.remove(key);
             }
+            ast::Statement::Input(input_stmt) => {
+                let key = input_stmt.0.0.to_owned();
+                let mut value = String::new();
+                std::io::stdin().read_line(&mut value).unwrap();
+
+                self.global_var
+                    .insert(key, Value::String(value.trim().to_string()));
+            }
             ast::Statement::Print(print_stmt) => {
                 let val = self.expression(&print_stmt.0)?;
 

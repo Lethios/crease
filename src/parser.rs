@@ -53,6 +53,7 @@ impl<'a> Parser<'a> {
         let res = match self.curr_token.kind {
             TokenKind::Set => self.assign_stmt()?,
             TokenKind::Del => self.delete_stmt()?,
+            TokenKind::In => self.input_stmt()?,
             TokenKind::Out => self.print_stmt()?,
             TokenKind::If => self.if_stmt()?,
             TokenKind::While => self.while_stmt()?,
@@ -140,6 +141,25 @@ impl<'a> Parser<'a> {
         };
 
         Ok(Statement::Delete(Delete(Identifier(iden))))
+    }
+
+    fn input_stmt(&mut self) -> Result<Statement, Error> {
+        self.consume()?;
+
+        let iden = match self.consume()?.kind {
+            TokenKind::Identifier(iden) => iden,
+            _ => {
+                return Err(ParserError::new(
+                    UnexpectedToken,
+                    "expected identifier".to_string(),
+                    self.curr_token.line,
+                    self.curr_token.column,
+                )
+                .into());
+            }
+        };
+
+        Ok(Statement::Input(Input(Identifier(iden))))
     }
 
     fn print_stmt(&mut self) -> Result<Statement, Error> {

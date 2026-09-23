@@ -29,6 +29,7 @@ pub enum TokenKind {
     RParen,
 
     Out,
+    In,
     Set,
     Del,
     If,

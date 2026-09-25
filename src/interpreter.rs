@@ -310,13 +310,22 @@ impl Interpreter {
                             if r == &0 {
                                 return Err(RuntimeError::new(
                                     DivisionByZero,
-                                    ("division by zero").to_string(),
+                                    "division by zero".to_string(),
                                 )
                                 .into());
                             }
                             Ok(Value::Int(l / r))
                         }
-                        ast::BinaryOperators::Mod => Ok(Value::Int(l % r)),
+                        ast::BinaryOperators::Mod => {
+                            if r == &0 {
+                                return Err(RuntimeError::new(
+                                    DivisionByZero,
+                                    "division by zero".to_string(),
+                                )
+                                .into());
+                            }
+                            Ok(Value::Int(l % r))
+                        }
                         ast::BinaryOperators::LThan => Ok(Value::Boolean(l < r)),
                         ast::BinaryOperators::GThan => Ok(Value::Boolean(l > r)),
                         ast::BinaryOperators::LThanEquals => Ok(Value::Boolean(l <= r)),
@@ -338,13 +347,22 @@ impl Interpreter {
                             if r.abs() <= ERROR {
                                 return Err(RuntimeError::new(
                                     DivisionByZero,
-                                    ("division by zero").to_string(),
+                                    "division by zero".to_string(),
                                 )
                                 .into());
                             }
                             Ok(Value::Float(l / r))
                         }
-                        ast::BinaryOperators::Mod => Ok(Value::Float(l % r)),
+                        ast::BinaryOperators::Mod => {
+                            if r.abs() <= ERROR {
+                                return Err(RuntimeError::new(
+                                    DivisionByZero,
+                                    "division by zero".to_string(),
+                                )
+                                .into());
+                            }
+                            Ok(Value::Float(l % r))
+                        }
                         ast::BinaryOperators::LThan => Ok(Value::Boolean(l < r)),
                         ast::BinaryOperators::GThan => Ok(Value::Boolean(l > r)),
                         ast::BinaryOperators::LThanEquals => Ok(Value::Boolean(l <= r)),

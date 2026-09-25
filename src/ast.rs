@@ -1,27 +1,37 @@
 #[derive(Debug, PartialEq)]
-pub struct Int(pub i64);
+pub struct IntegerLiteral {
+    pub int: i64,
+}
 
 #[derive(Debug, PartialEq)]
-pub struct Float(pub f64);
+pub struct FloatLiteral {
+    pub float: f64,
+}
 
 #[derive(Debug, PartialEq)]
-pub struct Boolean(pub bool);
+pub struct BooleanLiteral {
+    pub boolean: bool,
+}
 
 #[derive(Debug, PartialEq)]
-pub struct String(pub std::string::String);
+pub struct StringLiteral {
+    pub string: std::string::String,
+}
 
 #[derive(Debug, PartialEq)]
-pub struct Identifier(pub std::string::String);
+pub struct Identifier {
+    pub value: std::string::String,
+}
 
 #[derive(Debug, PartialEq)]
 pub enum UnaryOperators {
     Add,
     Sub,
     Not,
-    Int,
-    Float,
-    Bool,
-    Str,
+    ToInt,
+    ToFloat,
+    ToBool,
+    ToStr,
 }
 
 #[derive(Debug, PartialEq)]
@@ -56,35 +66,41 @@ pub struct BinaryOperation {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Int(Int),
-    Float(Float),
-    Boolean(Boolean),
-    String(String),
+    IntegerLiteral(IntegerLiteral),
+    FloatLiteral(FloatLiteral),
+    BooleanLiteral(BooleanLiteral),
+    StringLiteral(StringLiteral),
     Identifier(Identifier),
     UnaryOperation(UnaryOperation),
     BinaryOperation(BinaryOperation),
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Declare {
+pub struct DeclareStmt {
     pub iden: Identifier,
     pub expr: Expression,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Assignment {
+pub struct AssignmentStmt {
     pub iden: Identifier,
     pub expr: Expression,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Delete(pub Identifier);
+pub struct DeleteStmt {
+    pub iden: Identifier,
+}
 
 #[derive(Debug, PartialEq)]
-pub struct Input(pub Identifier);
+pub struct InputStmt {
+    pub iden: Identifier,
+}
 
 #[derive(Debug, PartialEq)]
-pub struct Print(pub Expression);
+pub struct PrintStmt {
+    pub expr: Expression,
+}
 
 #[derive(Debug, PartialEq)]
 pub struct IfStmt {
@@ -101,11 +117,11 @@ pub struct WhileStmt {
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
-    Declare(Declare),
-    Assignment(Assignment),
-    Delete(Delete),
-    Input(Input),
-    Print(Print),
+    DeclareStmt(DeclareStmt),
+    AssignmentStmt(AssignmentStmt),
+    DeleteStmt(DeleteStmt),
+    InputStmt(InputStmt),
+    PrintStmt(PrintStmt),
     IfStmt(IfStmt),
     WhileStmt(WhileStmt),
 }

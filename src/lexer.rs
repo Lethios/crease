@@ -85,7 +85,7 @@ impl<'a> Lexer<'a> {
                             reason = "valid i64 is guaranteed"
                         )]
                         let num = temp.parse::<i64>().unwrap();
-                        break Ok(self.construct_token(Integer(num), start, end));
+                        break Ok(self.construct_token(IntegerLiteral(num), start, end));
                     } else {
                         #[expect(
                             clippy::unwrap_used,
@@ -93,7 +93,7 @@ impl<'a> Lexer<'a> {
                             reason = "valid f64 is guaranteed"
                         )]
                         let num = temp.parse::<f64>().unwrap();
-                        break Ok(self.construct_token(Floating(num), start, end));
+                        break Ok(self.construct_token(FloatLiteral(num), start, end));
                     }
                 }
 
@@ -215,7 +215,7 @@ impl<'a> Lexer<'a> {
                     let temp = str::from_utf8(&self.input[start..end]).unwrap();
                     let string = temp.to_string();
 
-                    break Ok(self.construct_token(String(string), start_line, start_col));
+                    break Ok(self.construct_token(StringLiteral(string), start_line, start_col));
                 }
 
                 b'#' => {

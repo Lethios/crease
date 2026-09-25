@@ -94,7 +94,7 @@ impl<'a> Parser<'a> {
             )
             .into());
         }
-        let iden = match self.consume()?.kind {
+        let value = match self.consume()?.kind {
             TokenKind::Identifier(s) => s,
             _ => {
                 return Err(ParserError::new(
@@ -119,14 +119,14 @@ impl<'a> Parser<'a> {
         self.consume()?;
 
         let expr = self.expr()?;
-        Ok(Statement::Declare(Declare {
-            iden: Identifier(iden),
+        Ok(Statement::DeclareStmt(DeclareStmt {
+            iden: Identifier { value },
             expr,
         }))
     }
 
     fn assign_stmt(&mut self) -> Result<Statement, Error> {
-        let iden = match self.consume()?.kind {
+        let value = match self.consume()?.kind {
             TokenKind::Identifier(iden) => iden,
             _ => {
                 return Err(ParserError::new(
@@ -151,8 +151,8 @@ impl<'a> Parser<'a> {
         self.consume()?;
 
         let expr = self.expr()?;
-        Ok(Statement::Assignment(Assignment {
-            iden: Identifier(iden),
+        Ok(Statement::AssignmentStmt(AssignmentStmt {
+            iden: Identifier { value },
             expr,
         }))
     }
@@ -160,7 +160,7 @@ impl<'a> Parser<'a> {
     fn delete_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
-        let iden = match self.consume()?.kind {
+        let value = match self.consume()?.kind {
             TokenKind::Identifier(iden) => iden,
             _ => {
                 return Err(ParserError::new(
@@ -173,13 +173,15 @@ impl<'a> Parser<'a> {
             }
         };
 
-        Ok(Statement::Delete(Delete(Identifier(iden))))
+        Ok(Statement::DeleteStmt(DeleteStmt {
+            iden: Identifier { value },
+        }))
     }
 
     fn input_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
-        let iden = match self.consume()?.kind {
+        let value = match self.consume()?.kind {
             TokenKind::Identifier(iden) => iden,
             _ => {
                 return Err(ParserError::new(
@@ -192,14 +194,16 @@ impl<'a> Parser<'a> {
             }
         };
 
-        Ok(Statement::Input(Input(Identifier(iden))))
+        Ok(Statement::InputStmt(InputStmt {
+            iden: Identifier { value },
+        }))
     }
 
     fn print_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
         let expr = self.expr()?;
-        Ok(Statement::Print(Print(expr)))
+        Ok(Statement::PrintStmt(PrintStmt { expr }))
     }
 
     fn if_stmt(&mut self) -> Result<Statement, Error> {
@@ -500,30 +504,18 @@ impl<'a> Parser<'a> {
         let token = self.consume()?;
 
         match token.kind {
-            TokenKind::Integer(n) => {
-                let res = Int(n);
-                Ok(Expression::Int(res))
+            TokenKind::IntegerLiteral(int) => {
+                Ok(Expression::IntegerLiteral(IntegerLiteral { int }))
             }
-            TokenKind::Floating(n) => {
-                let res = Float(n);
-                Ok(Expression::Float(res))
+            TokenKind::FloatLiteral(float) => Ok(Expression::FloatLiteral(FloatLiteral { float })),
+            TokenKind::True => Ok(Expression::BooleanLiteral(BooleanLiteral { boolean: true })),
+            TokenKind::False => Ok(Expression::BooleanLiteral(BooleanLiteral {
+                boolean: false,
+            })),
+            TokenKind::StringLiteral(string) => {
+                Ok(Expression::StringLiteral(StringLiteral { string }))
             }
-            TokenKind::True => {
-                let res = Boolean(true);
-                Ok(Expression::Boolean(res))
-            }
-            TokenKind::False => {
-                let res = Boolean(false);
-                Ok(Expression::Boolean(res))
-            }
-            TokenKind::String(s) => {
-                let res = String(s);
-                Ok(Expression::String(res))
-            }
-            TokenKind::Identifier(i) => {
-                let res = Identifier(i);
-                Ok(Expression::Identifier(res))
-            }
+            TokenKind::Identifier(value) => Ok(Expression::Identifier(Identifier { value })),
             TokenKind::LParen => {
                 let res = self.expr()?;
 
@@ -563,28 +555,28 @@ impl<'a> Parser<'a> {
             }
             TokenKind::Int => {
                 let res = UnaryOperation {
-                    operator: UnaryOperators::Int,
+                    operator: UnaryOperators::ToInt,
                     operand: Box::new(self.factor()?),
                 };
                 Ok(Expression::UnaryOperation(res))
             }
             TokenKind::Float => {
                 let res = UnaryOperation {
-                    operator: UnaryOperators::Float,
+                    operator: UnaryOperators::ToFloat,
                     operand: Box::new(self.factor()?),
                 };
                 Ok(Expression::UnaryOperation(res))
             }
             TokenKind::Bool => {
                 let res = UnaryOperation {
-                    operator: UnaryOperators::Bool,
+                    operator: UnaryOperators::ToBool,
                     operand: Box::new(self.factor()?),
                 };
                 Ok(Expression::UnaryOperation(res))
             }
             TokenKind::Str => {
                 let res = UnaryOperation {
-                    operator: UnaryOperators::Str,
+                    operator: UnaryOperators::ToStr,
                     operand: Box::new(self.factor()?),
                 };
                 Ok(Expression::UnaryOperation(res))

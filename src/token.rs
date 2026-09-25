@@ -1,14 +1,18 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenKind {
     Int,
-    Integer(i64),
+    IntegerLiteral(i64),
+
     Float,
-    Floating(f64),
+    FloatLiteral(f64),
+
     Bool,
     True,
     False,
+
     Str,
-    String(String),
+    StringLiteral(String),
+
     Identifier(String),
 
     Plus,

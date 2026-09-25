@@ -35,14 +35,14 @@ impl Interpreter {
 
     fn statement(&mut self, stmt: &ast::Statement) -> Result<(), Error> {
         match stmt {
-            ast::Statement::Declare(declare_stmt) => {
-                let key = &declare_stmt.iden.0;
+            ast::Statement::DeclareStmt(declare_stmt) => {
+                let key = &declare_stmt.iden.value;
                 let val = self.expression(&declare_stmt.expr)?;
 
                 self.global_var.insert(key.to_string(), val);
             }
-            ast::Statement::Assignment(assign_stmt) => {
-                let key = &assign_stmt.iden.0;
+            ast::Statement::AssignmentStmt(assign_stmt) => {
+                let key = &assign_stmt.iden.value;
                 let val = self.expression(&assign_stmt.expr)?;
 
                 if let Some(old_val) = self.global_var.get_mut(key) {
@@ -55,21 +55,21 @@ impl Interpreter {
                     .into());
                 }
             }
-            ast::Statement::Delete(delete_stmt) => {
-                let key = &delete_stmt.0.0;
+            ast::Statement::DeleteStmt(delete_stmt) => {
+                let key = &delete_stmt.iden.value;
 
                 self.global_var.remove(key);
             }
-            ast::Statement::Input(input_stmt) => {
-                let key = input_stmt.0.0.to_owned();
+            ast::Statement::InputStmt(input_stmt) => {
+                let key = input_stmt.iden.value.clone();
                 let mut value = String::new();
                 std::io::stdin().read_line(&mut value).unwrap();
 
                 self.global_var
                     .insert(key, Value::String(value.trim().to_string()));
             }
-            ast::Statement::Print(print_stmt) => {
-                let val = self.expression(&print_stmt.0)?;
+            ast::Statement::PrintStmt(print_stmt) => {
+                let val = self.expression(&print_stmt.expr)?;
 
                 match val {
                     Value::Int(num) => println!("{}", num),
@@ -128,19 +128,19 @@ impl Interpreter {
         const ERROR: f64 = 1e-10;
 
         match expr {
-            ast::Expression::Int(num) => Ok(Value::Int(num.0)),
+            ast::Expression::IntegerLiteral(n) => Ok(Value::Int(n.int)),
 
-            ast::Expression::Float(num) => Ok(Value::Float(num.0)),
+            ast::Expression::FloatLiteral(n) => Ok(Value::Float(n.float)),
 
-            ast::Expression::Boolean(boolean) => Ok(Value::Boolean(boolean.0)),
+            ast::Expression::BooleanLiteral(b) => Ok(Value::Boolean(b.boolean)),
 
-            ast::Expression::String(string) => Ok(Value::String(string.0.to_owned())),
+            ast::Expression::StringLiteral(s) => Ok(Value::String(s.string.clone())),
 
-            ast::Expression::Identifier(iden) => match self.global_var.get(&iden.0) {
+            ast::Expression::Identifier(i) => match self.global_var.get(&i.value) {
                 Some(val) => Ok(val.clone()),
                 None => Err(RuntimeError::new(
                     UndefinedVariable,
-                    format!("undefined variable `{}`", iden.0),
+                    format!("undefined variable `{}`", i.value),
                 )
                 .into()),
             },
@@ -177,7 +177,7 @@ impl Interpreter {
                             .into())
                         }
                     }
-                    ast::UnaryOperators::Int => match value {
+                    ast::UnaryOperators::ToInt => match value {
                         Value::Int(_) => Ok(value),
                         Value::Float(num) => Ok(Value::Int(num as i64)),
                         Value::String(string) => {
@@ -195,7 +195,7 @@ impl Interpreter {
                         )
                         .into()),
                     },
-                    ast::UnaryOperators::Float => match value {
+                    ast::UnaryOperators::ToFloat => match value {
                         Value::Int(num) => Ok(Value::Float(num as f64)),
                         Value::Float(_) => Ok(value),
                         Value::String(string) => {
@@ -213,7 +213,7 @@ impl Interpreter {
                         )
                         .into()),
                     },
-                    ast::UnaryOperators::Bool => match value {
+                    ast::UnaryOperators::ToBool => match value {
                         Value::Boolean(_) => Ok(value),
                         Value::String(string) => {
                             let boolean = string.parse::<bool>().map_err(|_| {
@@ -230,7 +230,7 @@ impl Interpreter {
                         )
                         .into()),
                     },
-                    ast::UnaryOperators::Str => match value {
+                    ast::UnaryOperators::ToStr => match value {
                         Value::Int(num) => Ok(Value::String(num.to_string())),
                         Value::Float(num) => Ok(Value::String(num.to_string())),
                         Value::String(_) => Ok(value),

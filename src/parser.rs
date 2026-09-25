@@ -51,7 +51,8 @@ impl<'a> Parser<'a> {
 
     fn statement(&mut self) -> Result<Statement, Error> {
         let res = match self.curr_token.kind {
-            TokenKind::Set => self.assign_stmt()?,
+            TokenKind::Set => self.declare_stmt()?,
+            TokenKind::Identifier(_) => self.assign_stmt()?,
             TokenKind::Del => self.delete_stmt()?,
             TokenKind::In => self.input_stmt()?,
             TokenKind::Out => self.print_stmt()?,
@@ -81,7 +82,7 @@ impl<'a> Parser<'a> {
         Ok(res)
     }
 
-    fn assign_stmt(&mut self) -> Result<Statement, Error> {
+    fn declare_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
         if !matches!(&self.curr_token.kind, TokenKind::Identifier(_)) {
@@ -116,6 +117,37 @@ impl<'a> Parser<'a> {
             .into());
         }
         self.consume()?;
+
+        let expr = self.expr()?;
+        Ok(Statement::Declare(Declare {
+            iden: Identifier(iden),
+            expr,
+        }))
+    }
+
+    fn assign_stmt(&mut self) -> Result<Statement, Error> {
+        let iden = match self.consume()?.kind {
+            TokenKind::Identifier(iden) => iden,
+            _ => {
+                return Err(ParserError::new(
+                    UnexpectedToken,
+                    "expected identifier".to_string(),
+                    self.curr_token.line,
+                    self.curr_token.column,
+                )
+                .into());
+            }
+        };
+
+        if self.consume()?.kind != TokenKind::Equals {
+            return Err(ParserError::new(
+                UnexpectedToken,
+                format!("expected `=`, found `{:?}`", self.curr_token.kind),
+                self.curr_token.line,
+                self.curr_token.column,
+            )
+            .into());
+        }
 
         let expr = self.expr()?;
         Ok(Statement::Assignment(Assignment {

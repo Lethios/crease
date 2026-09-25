@@ -5,6 +5,9 @@ edition = "2024"
 
 [dependencies]
 
+[profile.release]
+debug = true
+
 [lints.clippy]
 string_slice = "warn"
 indexing_slicing = "warn"

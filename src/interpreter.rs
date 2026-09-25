@@ -34,11 +34,25 @@ impl Interpreter {
 
     fn statement(&mut self, stmt: &ast::Statement) -> Result<(), Error> {
         match stmt {
+            ast::Statement::Declare(declare_stmt) => {
+                let key = &declare_stmt.iden.0;
+                let val = self.expression(&declare_stmt.expr)?;
+
+                self.global_var.insert(key.to_string(), val);
+            }
             ast::Statement::Assignment(assign_stmt) => {
-                let key = assign_stmt.iden.0.to_owned();
+                let key = &assign_stmt.iden.0;
                 let val = self.expression(&assign_stmt.expr)?;
 
-                self.global_var.insert(key, val);
+                if let Some(old_val) = self.global_var.get_mut(key) {
+                    *old_val = val;
+                } else {
+                    return Err(RuntimeError::new(
+                        UndefinedVariable,
+                        format!("undeclared variable assignment `{}`", key),
+                    )
+                    .into());
+                }
             }
             ast::Statement::Delete(delete_stmt) => {
                 let key = &delete_stmt.0.0;
@@ -119,7 +133,7 @@ impl Interpreter {
             ast::Expression::String(string) => Ok(Value::String(string.0.to_owned())),
 
             ast::Expression::Identifier(iden) => match self.global_var.get(&iden.0) {
-                Some(val) => Ok(val.to_owned()),
+                Some(val) => Ok(val.clone()),
                 None => Err(RuntimeError::new(
                     UndefinedVariable,
                     format!("undefined variable `{}`", iden.0),

@@ -58,6 +58,12 @@ pub enum Expression {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct Declare {
+    pub iden: Identifier,
+    pub expr: Expression,
+}
+
+#[derive(Debug, PartialEq)]
 pub struct Assignment {
     pub iden: Identifier,
     pub expr: Expression,
@@ -87,6 +93,7 @@ pub struct WhileStmt {
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
+    Declare(Declare),
     Assignment(Assignment),
     Delete(Delete),
     Input(Input),

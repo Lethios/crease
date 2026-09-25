@@ -500,9 +500,13 @@ impl<'a> Parser<'a> {
         let token = self.consume()?;
 
         match token.kind {
-            TokenKind::Number(n) => {
-                let res = Number(n);
-                Ok(Expression::Number(res))
+            TokenKind::Integer(n) => {
+                let res = Int(n);
+                Ok(Expression::Int(res))
+            }
+            TokenKind::Floating(n) => {
+                let res = Float(n);
+                Ok(Expression::Float(res))
             }
             TokenKind::True => {
                 let res = Boolean(true);
@@ -557,9 +561,16 @@ impl<'a> Parser<'a> {
                 };
                 Ok(Expression::UnaryOperation(res))
             }
-            TokenKind::Num => {
+            TokenKind::Int => {
                 let res = UnaryOperation {
-                    operator: UnaryOperators::Num,
+                    operator: UnaryOperators::Int,
+                    operand: Box::new(self.factor()?),
+                };
+                Ok(Expression::UnaryOperation(res))
+            }
+            TokenKind::Float => {
+                let res = UnaryOperation {
+                    operator: UnaryOperators::Float,
                     operand: Box::new(self.factor()?),
                 };
                 Ok(Expression::UnaryOperation(res))

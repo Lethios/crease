@@ -7,7 +7,8 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
-    Number(f64),
+    Int(i64),
+    Float(f64),
     Boolean(bool),
     String(std::string::String),
 }
@@ -71,7 +72,8 @@ impl Interpreter {
                 let val = self.expression(&print_stmt.0)?;
 
                 match val {
-                    Value::Number(num) => println!("{}", num),
+                    Value::Int(num) => println!("{}", num),
+                    Value::Float(num) => println!("{}", num),
                     Value::Boolean(boolean) => println!("{}", boolean),
                     Value::String(string) => println!("{}", string),
                 }
@@ -126,7 +128,9 @@ impl Interpreter {
         const ERROR: f64 = 1e-10;
 
         match expr {
-            ast::Expression::Number(num) => Ok(Value::Number(num.0)),
+            ast::Expression::Int(num) => Ok(Value::Int(num.0)),
+
+            ast::Expression::Float(num) => Ok(Value::Float(num.0)),
 
             ast::Expression::Boolean(boolean) => Ok(Value::Boolean(boolean.0)),
 
@@ -145,53 +149,67 @@ impl Interpreter {
                 let value = self.expression(&unary.operand)?;
 
                 match unary.operator {
-                    ast::UnaryOperators::Add => {
-                        if let Value::Number(_) = value {
-                            Ok(value)
-                        } else {
-                            Err(RuntimeError::new(
-                                TypeMismatch,
-                                format!("expected number for unary `+`, found {:?}", value),
-                            )
-                            .into())
-                        }
-                    }
-                    ast::UnaryOperators::Sub => {
-                        if let Value::Number(num) = value {
-                            Ok(Value::Number(-num))
-                        } else {
-                            Err(RuntimeError::new(
-                                TypeMismatch,
-                                format!("expected number for unary `-`, found {:?}", value),
-                            )
-                            .into())
-                        }
-                    }
+                    ast::UnaryOperators::Add => match value {
+                        Value::Int(_) | Value::Float(_) => Ok(value),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            "expected either `int` or `float` for unary `+`".to_string(),
+                        )
+                        .into()),
+                    },
+                    ast::UnaryOperators::Sub => match value {
+                        Value::Int(num) => Ok(Value::Int(-num)),
+                        Value::Float(num) => Ok(Value::Float(-num)),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            "expected either `int` or `float` for unary `-`".to_string(),
+                        )
+                        .into()),
+                    },
                     ast::UnaryOperators::Not => {
                         if let Value::Boolean(boolean) = value {
                             Ok(Value::Boolean(!boolean))
                         } else {
                             Err(RuntimeError::new(
                                 TypeMismatch,
-                                format!("expected boolean for unary `!`, found {:?}", value),
+                                format!("expected `boolean` for unary `!`, found {:?}", value),
                             )
                             .into())
                         }
                     }
-                    ast::UnaryOperators::Num => match value {
-                        Value::Number(_) => Ok(value),
+                    ast::UnaryOperators::Int => match value {
+                        Value::Int(_) => Ok(value),
+                        Value::Float(num) => Ok(Value::Int(num as i64)),
+                        Value::String(string) => {
+                            let num = string.parse::<i64>().map_err(|_| {
+                                RuntimeError::new(
+                                    TypeMismatch,
+                                    format!("failed to cast `{}` to int", string),
+                                )
+                            })?;
+                            Ok(Value::Int(num))
+                        }
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("cannot cast type `{:?}` to int", value),
+                        )
+                        .into()),
+                    },
+                    ast::UnaryOperators::Float => match value {
+                        Value::Int(num) => Ok(Value::Float(num as f64)),
+                        Value::Float(_) => Ok(value),
                         Value::String(string) => {
                             let num = string.parse::<f64>().map_err(|_| {
                                 RuntimeError::new(
                                     TypeMismatch,
-                                    format!("failed to cast `{}` to number", string),
+                                    format!("failed to cast `{}` to float", string),
                                 )
                             })?;
-                            Ok(Value::Number(num))
+                            Ok(Value::Float(num))
                         }
                         _ => Err(RuntimeError::new(
                             TypeMismatch,
-                            format!("cannot cast type `{:?}` to number", value),
+                            format!("cannot cast type `{:?}` to float", value),
                         )
                         .into()),
                     },
@@ -213,7 +231,8 @@ impl Interpreter {
                         .into()),
                     },
                     ast::UnaryOperators::Str => match value {
-                        Value::Number(num) => Ok(Value::String(num.to_string())),
+                        Value::Int(num) => Ok(Value::String(num.to_string())),
+                        Value::Float(num) => Ok(Value::String(num.to_string())),
                         Value::String(_) => Ok(value),
                         Value::Boolean(boolean) => Ok(Value::String(boolean.to_string())),
                     },
@@ -282,11 +301,39 @@ impl Interpreter {
 
                 let right = self.expression(&binary.right)?;
 
-                if let (Value::Number(l), Value::Number(r)) = (&left, &right) {
+                if let (Value::Int(l), Value::Int(r)) = (&left, &right) {
                     match binary.operator {
-                        ast::BinaryOperators::Add => Ok(Value::Number(l + r)),
-                        ast::BinaryOperators::Sub => Ok(Value::Number(l - r)),
-                        ast::BinaryOperators::Mul => Ok(Value::Number(l * r)),
+                        ast::BinaryOperators::Add => Ok(Value::Int(l + r)),
+                        ast::BinaryOperators::Sub => Ok(Value::Int(l - r)),
+                        ast::BinaryOperators::Mul => Ok(Value::Int(l * r)),
+                        ast::BinaryOperators::Div => {
+                            if r == &0 {
+                                return Err(RuntimeError::new(
+                                    DivisionByZero,
+                                    ("division by zero").to_string(),
+                                )
+                                .into());
+                            }
+                            Ok(Value::Int(l / r))
+                        }
+                        ast::BinaryOperators::Mod => Ok(Value::Int(l % r)),
+                        ast::BinaryOperators::LThan => Ok(Value::Boolean(l < r)),
+                        ast::BinaryOperators::GThan => Ok(Value::Boolean(l > r)),
+                        ast::BinaryOperators::LThanEquals => Ok(Value::Boolean(l <= r)),
+                        ast::BinaryOperators::GThanEquals => Ok(Value::Boolean(l >= r)),
+                        ast::BinaryOperators::Equals => Ok(Value::Boolean(l == r)),
+                        ast::BinaryOperators::NotEquals => Ok(Value::Boolean(l == r)),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("invalid operator `{:?}` for ints", binary.operator),
+                        )
+                        .into()),
+                    }
+                } else if let (Value::Float(l), Value::Float(r)) = (&left, &right) {
+                    match binary.operator {
+                        ast::BinaryOperators::Add => Ok(Value::Float(l + r)),
+                        ast::BinaryOperators::Sub => Ok(Value::Float(l - r)),
+                        ast::BinaryOperators::Mul => Ok(Value::Float(l * r)),
                         ast::BinaryOperators::Div => {
                             if r.abs() <= ERROR {
                                 return Err(RuntimeError::new(
@@ -295,9 +342,9 @@ impl Interpreter {
                                 )
                                 .into());
                             }
-                            Ok(Value::Number(l / r))
+                            Ok(Value::Float(l / r))
                         }
-                        ast::BinaryOperators::Mod => Ok(Value::Number(l % r)),
+                        ast::BinaryOperators::Mod => Ok(Value::Float(l % r)),
                         ast::BinaryOperators::LThan => Ok(Value::Boolean(l < r)),
                         ast::BinaryOperators::GThan => Ok(Value::Boolean(l > r)),
                         ast::BinaryOperators::LThanEquals => Ok(Value::Boolean(l <= r)),
@@ -308,7 +355,7 @@ impl Interpreter {
                         }
                         _ => Err(RuntimeError::new(
                             TypeMismatch,
-                            format!("invalid operator `{:?}` for numbers", binary.operator),
+                            format!("invalid operator `{:?}` for floats", binary.operator),
                         )
                         .into()),
                     }

@@ -1,5 +1,8 @@
 #[derive(Debug, PartialEq)]
-pub struct Number(pub f64);
+pub struct Int(pub i64);
+
+#[derive(Debug, PartialEq)]
+pub struct Float(pub f64);
 
 #[derive(Debug, PartialEq)]
 pub struct Boolean(pub bool);
@@ -15,7 +18,8 @@ pub enum UnaryOperators {
     Add,
     Sub,
     Not,
-    Num,
+    Int,
+    Float,
     Bool,
     Str,
 }
@@ -52,7 +56,8 @@ pub struct BinaryOperation {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Number(Number),
+    Int(Int),
+    Float(Float),
     Boolean(Boolean),
     String(String),
     Identifier(Identifier),

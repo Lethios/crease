@@ -18,13 +18,14 @@ equality     = comparison { ( "==" | "!=" ) comparison };
 comparison   = arithmetic { ( "<" | ">" | "<=" | ">=" ) arithmetic };
 arithmetic   = term { ( "+" | "-" ) term };
 term         = factor { ( "*" | "/" | "%" ) factor };
-factor       = NUMBER | BOOLEAN | STRING | IDENTIFIER | "(" expr ")" | ( "+" | "-" | "!" ) factor | ( "num" | "bool" | "str" ) factor;
+factor       = INT | FLOAT | BOOLEAN | STRING | IDENTIFIER | "(" expr ")" | ( "+" | "-" | "!" ) factor | ( "int" | "float" | "bool" | "str" ) factor;
 
 COMMENT      = "#" [^\n]*;
 IDENTIFIER   = [a-zA-Z_][a-zA-Z0-9_]*;
-NUMBER       = [0-9]+(\.[0-9]+)?;
+INT          = [0-9]+;
+FLOAT        = [0-9]+\.[0-9]+;
 BOOLEAN      = "true" | "false";
 STRING       = '"[^"]*"';
 ```
 
-- TODO: end stmt error fix, standardize var names, error name revamp, crate import name fixes, token name to literal char name, code cleanup.
+- TODO: end stmt error fix, Standardize var names, error name revamp, crate import name fixes, token name to literal char name, code cleanup.

@@ -77,14 +77,24 @@ impl<'a> Lexer<'a> {
                         reason = "&str guarantees utf8"
                     )]
                     let temp = str::from_utf8(&self.input[start..=end]).unwrap();
-                    #[expect(
-                        clippy::unwrap_used,
-                        clippy::unwrap_in_result,
-                        reason = "valid f64 is guaranteed"
-                    )]
-                    let num = temp.parse::<f64>().unwrap();
 
-                    break Ok(self.construct_token(Number(num), start_line, start_col));
+                    if !seen_decimal {
+                        #[expect(
+                            clippy::unwrap_used,
+                            clippy::unwrap_in_result,
+                            reason = "valid i64 is guaranteed"
+                        )]
+                        let num = temp.parse::<i64>().unwrap();
+                        break Ok(self.construct_token(Integer(num), start, end));
+                    } else {
+                        #[expect(
+                            clippy::unwrap_used,
+                            clippy::unwrap_in_result,
+                            reason = "valid f64 is guaranteed"
+                        )]
+                        let num = temp.parse::<f64>().unwrap();
+                        break Ok(self.construct_token(Floating(num), start, end));
+                    }
                 }
 
                 b'=' => {
@@ -252,7 +262,8 @@ impl<'a> Lexer<'a> {
                         "endwhile" => EndWhile,
                         "true" => True,
                         "false" => False,
-                        "num" => Num,
+                        "int" => Int,
+                        "float" => Float,
                         "bool" => Bool,
                         "str" => Str,
                         _ => Identifier(s.to_string()),

@@ -5,6 +5,8 @@ use crate::{
     error::{Error, RuntimeError, RuntimeErrorKind::*},
 };
 
+const ERROR: f64 = 1e-10;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Value {
     Int(i64),
@@ -125,8 +127,6 @@ impl Interpreter {
     }
 
     fn expression(&self, expr: &ast::Expression) -> Result<Value, Error> {
-        const ERROR: f64 = 1e-10;
-
         match expr {
             ast::Expression::IntegerLiteral(n) => Ok(Value::Int(n.int)),
 
@@ -322,7 +322,7 @@ impl Interpreter {
                         ast::BinaryOperators::LThanEquals => Ok(Value::Boolean(l <= r)),
                         ast::BinaryOperators::GThanEquals => Ok(Value::Boolean(l >= r)),
                         ast::BinaryOperators::Equals => Ok(Value::Boolean(l == r)),
-                        ast::BinaryOperators::NotEquals => Ok(Value::Boolean(l == r)),
+                        ast::BinaryOperators::NotEquals => Ok(Value::Boolean(l != r)),
                         _ => Err(RuntimeError::new(
                             TypeMismatch,
                             format!("invalid operator `{:?}` for ints", binary.operator),

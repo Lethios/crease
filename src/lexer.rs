@@ -39,10 +39,10 @@ impl<'a> Lexer<'a> {
                     let start = self.idx - 1;
                     let mut seen_decimal = false;
 
-                    while let Some(d) = self.peek() {
-                        if d.is_ascii_digit() {
+                    while let Some(char) = self.peek() {
+                        if char.is_ascii_digit() {
                             self.consume();
-                        } else if d == b'.' {
+                        } else if char == b'.' {
                             if seen_decimal {
                                 // flag double decimal point 0..
                                 return Err(LexerError::new(
@@ -219,6 +219,7 @@ impl<'a> Lexer<'a> {
                 }
 
                 b'#' => {
+                    // skip all char after # till newline
                     while let Some(char) = self.peek() {
                         if char != b'\n' {
                             self.consume();

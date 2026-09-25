@@ -37,6 +37,53 @@ impl<'a> Parser<'a> {
         Ok(())
     }
 
+    fn expect_identifier(&mut self, msg: &str) -> Result<String, Error> {
+        let (line, column) = (self.curr_token.line, self.curr_token.column);
+
+        match self.consume()?.kind {
+            TokenKind::Identifier(value) => Ok(value),
+            _ => Err(ParserError::new(UnexpectedToken, msg.to_string(), line, column).into()),
+        }
+    }
+
+    fn expect_token(&mut self, kind: TokenKind, msg: &str) -> Result<Token, Error> {
+        if self.curr_token.kind != kind {
+            return Err(ParserError::new(
+                UnexpectedToken,
+                msg.to_string(),
+                self.curr_token.line,
+                self.curr_token.column,
+            )
+            .into());
+        }
+
+        self.consume()
+    }
+
+    fn construct_un_expr(&self, operator: UnaryOperators, operand: Expression) -> Expression {
+        let res = UnaryOperation {
+            operator,
+            operand: Box::new(operand),
+        };
+
+        Expression::UnaryOperation(res)
+    }
+
+    fn construct_bin_expr(
+        &self,
+        operator: BinaryOperators,
+        lhs: Expression,
+        rhs: Expression,
+    ) -> Expression {
+        let res = BinaryOperation {
+            operator,
+            left: Box::new(lhs),
+            right: Box::new(rhs),
+        };
+
+        Expression::BinaryOperation(res)
+    }
+
     fn program(&mut self) -> Result<Vec<Statement>, Error> {
         let mut statements = Vec::new();
         self.skip_newlines()?;
@@ -85,40 +132,10 @@ impl<'a> Parser<'a> {
     fn declare_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
-        if !matches!(&self.curr_token.kind, TokenKind::Identifier(_)) {
-            return Err(ParserError::new(
-                UnexpectedToken,
-                ("expected identifier after `set`").to_string(),
-                self.curr_token.line,
-                self.curr_token.column,
-            )
-            .into());
-        }
-        let value = match self.consume()?.kind {
-            TokenKind::Identifier(s) => s,
-            _ => {
-                return Err(ParserError::new(
-                    UnexpectedToken,
-                    "expected identifier".to_string(),
-                    self.curr_token.line,
-                    self.curr_token.column,
-                )
-                .into());
-            }
-        };
-
-        if self.curr_token.kind != TokenKind::Equals {
-            return Err(ParserError::new(
-                UnexpectedToken,
-                ("expected `=`").to_string(),
-                self.curr_token.line,
-                self.curr_token.column,
-            )
-            .into());
-        }
-        self.consume()?;
-
+        let value = self.expect_identifier("expected identifier after `set`")?;
+        self.expect_token(TokenKind::Equals, "expected `=`")?;
         let expr = self.expr()?;
+
         Ok(Statement::DeclareStmt(DeclareStmt {
             iden: Identifier { value },
             expr,
@@ -126,31 +143,11 @@ impl<'a> Parser<'a> {
     }
 
     fn assign_stmt(&mut self) -> Result<Statement, Error> {
-        let value = match self.consume()?.kind {
-            TokenKind::Identifier(iden) => iden,
-            _ => {
-                return Err(ParserError::new(
-                    UnexpectedToken,
-                    "expected identifier".to_string(),
-                    self.curr_token.line,
-                    self.curr_token.column,
-                )
-                .into());
-            }
-        };
+        let value = self.expect_identifier("expected identifier")?;
 
-        if self.curr_token.kind != TokenKind::Equals {
-            return Err(ParserError::new(
-                UnexpectedToken,
-                format!("expected `=`, found `{:?}`", self.curr_token.kind),
-                self.curr_token.line,
-                self.curr_token.column,
-            )
-            .into());
-        }
-        self.consume()?;
-
+        self.expect_token(TokenKind::Equals, "expected `=`")?;
         let expr = self.expr()?;
+
         Ok(Statement::AssignmentStmt(AssignmentStmt {
             iden: Identifier { value },
             expr,
@@ -160,18 +157,7 @@ impl<'a> Parser<'a> {
     fn delete_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
-        let value = match self.consume()?.kind {
-            TokenKind::Identifier(iden) => iden,
-            _ => {
-                return Err(ParserError::new(
-                    UnexpectedToken,
-                    "expected identifier".to_string(),
-                    self.curr_token.line,
-                    self.curr_token.column,
-                )
-                .into());
-            }
-        };
+        let value = self.expect_identifier("expected identifier")?;
 
         Ok(Statement::DeleteStmt(DeleteStmt {
             iden: Identifier { value },
@@ -181,18 +167,7 @@ impl<'a> Parser<'a> {
     fn input_stmt(&mut self) -> Result<Statement, Error> {
         self.consume()?;
 
-        let value = match self.consume()?.kind {
-            TokenKind::Identifier(iden) => iden,
-            _ => {
-                return Err(ParserError::new(
-                    UnexpectedToken,
-                    "expected identifier".to_string(),
-                    self.curr_token.line,
-                    self.curr_token.column,
-                )
-                .into());
-            }
-        };
+        let value = self.expect_identifier("expected identifier")?;
 
         Ok(Statement::InputStmt(InputStmt {
             iden: Identifier { value },
@@ -203,6 +178,7 @@ impl<'a> Parser<'a> {
         self.consume()?;
 
         let expr = self.expr()?;
+
         Ok(Statement::PrintStmt(PrintStmt { expr }))
     }
 
@@ -211,16 +187,7 @@ impl<'a> Parser<'a> {
 
         let if_cond = self.expr()?;
 
-        if self.curr_token.kind != TokenKind::Colon {
-            return Err(ParserError::new(
-                UnidentifiedToken,
-                ("expected `:`").to_string(),
-                self.curr_token.line,
-                self.curr_token.column,
-            )
-            .into());
-        }
-        self.consume()?;
+        self.expect_token(TokenKind::Colon, "expected `:`")?;
         self.skip_newlines()?;
 
         let mut if_stmts = Vec::new();
@@ -242,16 +209,7 @@ impl<'a> Parser<'a> {
         if self.curr_token.kind == TokenKind::Else {
             self.consume()?;
 
-            if self.curr_token.kind != TokenKind::Colon {
-                return Err(ParserError::new(
-                    UnidentifiedToken,
-                    ("expected `:`").to_string(),
-                    self.curr_token.line,
-                    self.curr_token.column,
-                )
-                .into());
-            }
-            self.consume()?;
+            self.expect_token(TokenKind::Colon, "expected `:`")?;
             self.skip_newlines()?;
 
             while self.curr_token.kind != TokenKind::EndIf {
@@ -269,33 +227,7 @@ impl<'a> Parser<'a> {
             }
         }
 
-        if self.curr_token.kind != TokenKind::EndIf {
-            if self.curr_token.kind == TokenKind::EOF {
-                return Err(ParserError::new(
-                    UnidentifiedToken,
-                    format!(
-                        "expected `endif` to close `{}` statement",
-                        if else_stmts.is_empty() {
-                            "if"
-                        } else {
-                            "if else"
-                        }
-                    ),
-                    self.curr_token.line,
-                    self.curr_token.column,
-                )
-                .into());
-            }
-
-            return Err(ParserError::new(
-                UnexpectedToken,
-                format!("expected `endif`, found `{:?}`", self.curr_token.kind),
-                self.curr_token.line,
-                self.curr_token.column,
-            )
-            .into());
-        }
-        self.consume()?;
+        self.expect_token(TokenKind::EndIf, "expected `endif`")?;
 
         let res = IfStmt {
             if_cond,
@@ -310,16 +242,7 @@ impl<'a> Parser<'a> {
 
         let while_cond = self.expr()?;
 
-        if self.curr_token.kind != TokenKind::Colon {
-            return Err(ParserError::new(
-                UnexpectedToken,
-                ("expected `:`").to_string(),
-                self.curr_token.line,
-                self.curr_token.column,
-            )
-            .into());
-        }
-        self.consume()?;
+        self.expect_token(TokenKind::Colon, "expected `:`")?;
         self.skip_newlines()?;
 
         let mut while_stmts = Vec::new();
@@ -533,53 +456,32 @@ impl<'a> Parser<'a> {
                 Ok(res)
             }
             TokenKind::Plus => {
-                let res = UnaryOperation {
-                    operator: UnaryOperators::Add,
-                    operand: Box::new(self.factor()?),
-                };
-                Ok(Expression::UnaryOperation(res))
+                let operand = self.factor()?;
+                Ok(self.construct_un_expr(UnaryOperators::Add, operand))
             }
             TokenKind::Minus => {
-                let res = UnaryOperation {
-                    operator: UnaryOperators::Sub,
-                    operand: Box::new(self.factor()?),
-                };
-                Ok(Expression::UnaryOperation(res))
+                let operand = self.factor()?;
+                Ok(self.construct_un_expr(UnaryOperators::Sub, operand))
             }
             TokenKind::Exclaim => {
-                let res = UnaryOperation {
-                    operator: UnaryOperators::Not,
-                    operand: Box::new(self.factor()?),
-                };
-                Ok(Expression::UnaryOperation(res))
+                let operand = self.factor()?;
+                Ok(self.construct_un_expr(UnaryOperators::Not, operand))
             }
             TokenKind::Int => {
-                let res = UnaryOperation {
-                    operator: UnaryOperators::ToInt,
-                    operand: Box::new(self.factor()?),
-                };
-                Ok(Expression::UnaryOperation(res))
+                let operand = self.factor()?;
+                Ok(self.construct_un_expr(UnaryOperators::ToInt, operand))
             }
             TokenKind::Float => {
-                let res = UnaryOperation {
-                    operator: UnaryOperators::ToFloat,
-                    operand: Box::new(self.factor()?),
-                };
-                Ok(Expression::UnaryOperation(res))
+                let operand = self.factor()?;
+                Ok(self.construct_un_expr(UnaryOperators::ToFloat, operand))
             }
             TokenKind::Bool => {
-                let res = UnaryOperation {
-                    operator: UnaryOperators::ToBool,
-                    operand: Box::new(self.factor()?),
-                };
-                Ok(Expression::UnaryOperation(res))
+                let operand = self.factor()?;
+                Ok(self.construct_un_expr(UnaryOperators::ToBool, operand))
             }
             TokenKind::Str => {
-                let res = UnaryOperation {
-                    operator: UnaryOperators::ToStr,
-                    operand: Box::new(self.factor()?),
-                };
-                Ok(Expression::UnaryOperation(res))
+                let operand = self.factor()?;
+                Ok(self.construct_un_expr(UnaryOperators::ToStr, operand))
             }
             _ => Err(ParserError::new(
                 UnidentifiedToken,
@@ -589,20 +491,5 @@ impl<'a> Parser<'a> {
             )
             .into()),
         }
-    }
-
-    fn construct_bin_expr(
-        &self,
-        operator: BinaryOperators,
-        lhs: Expression,
-        rhs: Expression,
-    ) -> Expression {
-        let res = BinaryOperation {
-            operator,
-            left: Box::new(lhs),
-            right: Box::new(rhs),
-        };
-
-        Expression::BinaryOperation(res)
     }
 }

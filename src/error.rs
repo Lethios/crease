@@ -89,7 +89,6 @@ pub enum ParserErrorKind {
     UnidentifiedToken,
     ExpectedStatement,
     UnexpectedToken,
-    MissingSemicolon,
 }
 
 #[derive(Debug, Clone)]
@@ -118,7 +117,6 @@ impl fmt::Display for ParserError {
             ParserErrorKind::UnidentifiedToken => write!(f, "{}", self.msg),
             ParserErrorKind::ExpectedStatement => write!(f, "{}", self.msg),
             ParserErrorKind::UnexpectedToken => write!(f, "{}", self.msg),
-            ParserErrorKind::MissingSemicolon => write!(f, "{}", self.msg),
         }
     }
 }

@@ -178,6 +178,45 @@ impl Interpreter {
                             .into())
                         }
                     }
+                    ast::UnaryOperators::Num => match value {
+                        Value::Number(_) => Ok(value),
+                        Value::String(string) => {
+                            let num = string.parse::<f64>().map_err(|_| {
+                                RuntimeError::new(
+                                    TypeMismatch,
+                                    format!("failed to cast `{}` to number", string),
+                                )
+                            })?;
+                            Ok(Value::Number(num))
+                        }
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("cannot cast type `{:?}` to number", value),
+                        )
+                        .into()),
+                    },
+                    ast::UnaryOperators::Bool => match value {
+                        Value::Boolean(_) => Ok(value),
+                        Value::String(string) => {
+                            let boolean = string.parse::<bool>().map_err(|_| {
+                                RuntimeError::new(
+                                    TypeMismatch,
+                                    format!("failed to cast `{}` to boolean", string),
+                                )
+                            })?;
+                            Ok(Value::Boolean(boolean))
+                        }
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("cannot cast type `{:?}` to boolean", value),
+                        )
+                        .into()),
+                    },
+                    ast::UnaryOperators::Str => match value {
+                        Value::Number(num) => Ok(Value::String(num.to_string())),
+                        Value::String(_) => Ok(value),
+                        Value::Boolean(boolean) => Ok(Value::String(boolean.to_string())),
+                    },
                 }
             }
 

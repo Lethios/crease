@@ -252,6 +252,9 @@ impl<'a> Lexer<'a> {
                         "endwhile" => EndWhile,
                         "true" => True,
                         "false" => False,
+                        "num" => Num,
+                        "bool" => Bool,
+                        "str" => Str,
                         _ => Identifier(s.to_string()),
                     };
 

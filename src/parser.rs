@@ -139,7 +139,7 @@ impl<'a> Parser<'a> {
             }
         };
 
-        if self.consume()?.kind != TokenKind::Equals {
+        if self.curr_token.kind != TokenKind::Equals {
             return Err(ParserError::new(
                 UnexpectedToken,
                 format!("expected `=`, found `{:?}`", self.curr_token.kind),
@@ -148,6 +148,7 @@ impl<'a> Parser<'a> {
             )
             .into());
         }
+        self.consume()?;
 
         let expr = self.expr()?;
         Ok(Statement::Assignment(Assignment {
@@ -552,6 +553,27 @@ impl<'a> Parser<'a> {
             TokenKind::Exclaim => {
                 let res = UnaryOperation {
                     operator: UnaryOperators::Not,
+                    operand: Box::new(self.factor()?),
+                };
+                Ok(Expression::UnaryOperation(res))
+            }
+            TokenKind::Num => {
+                let res = UnaryOperation {
+                    operator: UnaryOperators::Num,
+                    operand: Box::new(self.factor()?),
+                };
+                Ok(Expression::UnaryOperation(res))
+            }
+            TokenKind::Bool => {
+                let res = UnaryOperation {
+                    operator: UnaryOperators::Bool,
+                    operand: Box::new(self.factor()?),
+                };
+                Ok(Expression::UnaryOperation(res))
+            }
+            TokenKind::Str => {
+                let res = UnaryOperation {
+                    operator: UnaryOperators::Str,
                     operand: Box::new(self.factor()?),
                 };
                 Ok(Expression::UnaryOperation(res))

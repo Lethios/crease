@@ -18,7 +18,7 @@ equality     = comparison { ( "==" | "!=" ) comparison };
 comparison   = arithmetic { ( "<" | ">" | "<=" | ">=" ) arithmetic };
 arithmetic   = term { ( "+" | "-" ) term };
 term         = factor { ( "*" | "/" | "%" ) factor };
-factor       = NUMBER | BOOLEAN | STRING | IDENTIFIER | "(" expr ")" | ( "+" | "-" | "!" ) factor;
+factor       = NUMBER | BOOLEAN | STRING | IDENTIFIER | "(" expr ")" | ( "+" | "-" | "!" ) factor | ( "num" | "bool" | "str" ) factor;
 
 COMMENT      = "#" [^\n]*;
 IDENTIFIER   = [a-zA-Z_][a-zA-Z0-9_]*;

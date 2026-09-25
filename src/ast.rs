@@ -15,6 +15,9 @@ pub enum UnaryOperators {
     Add,
     Sub,
     Not,
+    Num,
+    Bool,
+    Str,
 }
 
 #[derive(Debug, PartialEq)]

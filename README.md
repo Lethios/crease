@@ -19,7 +19,7 @@ comparison   = arithmetic { ( "<" | ">" | "<=" | ">=" ) arithmetic };
 arithmetic   = term { ( "+" | "-" ) term };
 term         = factor { ( "*" | "/" | "%" ) factor };
 factor       = INT | FLOAT | BOOLEAN | STRING | IDENTIFIER | IDENTIFIER "[" expr "]" | array | "(" expr ")" | ( "+" | "-" | "!" ) factor | ( "int" | "float" | "bool" | "str" ) factor;
-array = "[" [ expr { "," expr } ] "]";
+array        = "[" [ expr { "," expr } ] "]";
 
 COMMENT      = "#" [^\n]*;
 IDENTIFIER   = [a-zA-Z_][a-zA-Z0-9_]*;

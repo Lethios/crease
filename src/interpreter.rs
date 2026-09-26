@@ -490,6 +490,158 @@ impl Interpreter {
                         )
                         .into()),
                     }
+                } else if let (Value::Array(l), Value::Array(r)) = (&left, &right) {
+                    match binary.operator {
+                        ast::BinaryOperators::Add => {
+                            Ok(Value::Array([l.as_slice(), r.as_slice()].concat()))
+                        }
+                        ast::BinaryOperators::Equals => Ok(Value::Boolean(l.eq(r))),
+                        ast::BinaryOperators::NotEquals => Ok(Value::Boolean(l.ne(r))),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("invalid operator `{:?}` for arrays", binary.operator),
+                        )
+                        .into()),
+                    }
+                } else if let (Value::Array(l), Value::Int(r)) = (&left, &right) {
+                    match binary.operator {
+                        ast::BinaryOperators::Add => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Int(i) => Ok(Value::Int(i + r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected int in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        ast::BinaryOperators::Sub => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Int(i) => Ok(Value::Int(i - r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected int in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        ast::BinaryOperators::Mul => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Int(i) => Ok(Value::Int(i * r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected int in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        ast::BinaryOperators::Div => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Int(i) => Ok(Value::Int(i / r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected int in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        ast::BinaryOperators::Mod => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Int(i) => Ok(Value::Int(i % r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected int in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("invalid operator `{:?}` for array and int", binary.operator),
+                        )
+                        .into()),
+                    }
+                } else if let (Value::Array(l), Value::Float(r)) = (&left, &right) {
+                    match binary.operator {
+                        ast::BinaryOperators::Add => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Float(f) => Ok(Value::Float(f + r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected float in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        ast::BinaryOperators::Sub => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Float(f) => Ok(Value::Float(f - r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected float in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        ast::BinaryOperators::Mul => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Float(f) => Ok(Value::Float(f * r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected float in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        ast::BinaryOperators::Div => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Float(f) => Ok(Value::Float(f / r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected float in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        ast::BinaryOperators::Mod => Ok(Value::Array(
+                            l.iter()
+                                .map(|x| match x {
+                                    Value::Float(f) => Ok(Value::Float(f % r)),
+                                    _ => Err(RuntimeError::new(
+                                        TypeMismatch,
+                                        "expected float in array".to_string(),
+                                    )
+                                    .into()),
+                                })
+                                .collect::<Result<Vec<_>, Error>>()?,
+                        )),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!(
+                                "invalid operator `{:?}` for array and float",
+                                binary.operator
+                            ),
+                        )
+                        .into()),
+                    }
                 } else {
                     Err(RuntimeError::new(
                         TypeMismatch,

@@ -523,9 +523,8 @@ impl<'a> Parser<'a> {
     }
 
     fn array(&mut self) -> Result<Expression, Error> {
-        self.expect_token(TokenKind::LBracket, "expected `[`")?;
-
         let mut arr: Vec<Expression> = Vec::new();
+
         if self.curr_token.kind != TokenKind::RBracket {
             let expr = self.expr()?;
             arr.push(expr);

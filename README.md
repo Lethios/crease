@@ -29,4 +29,4 @@ BOOLEAN      = "true" | "false";
 STRING       = '"[^"]*"';
 ```
 
-- TODO: end stmt error fix, Standardize var names, error name revamp.
+- TODO: end stmt error fix, Standardize var names, error name revamp, array ops.

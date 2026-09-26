@@ -67,10 +67,10 @@ impl Interpreter {
                     match array {
                         Value::Array(arr) => match idx {
                             Value::Int(i) => {
-                                if i < 0 {
+                                if !(0 <= i && i < arr.len() as i64) {
                                     return Err(RuntimeError::new(
                                         InvalidIndex,
-                                        "array index cannot be negative".to_string(),
+                                        "array index out of bounds".to_string(),
                                     )
                                     .into());
                                 }
@@ -175,9 +175,53 @@ impl Interpreter {
 
             ast::Expression::StringLiteral(s) => Ok(Value::String(s.string.clone())),
 
-            ast::Expression::ArrayLiteral(al) => Ok(Value::Array(al.arr)),
+            ast::Expression::ArrayLiteral(al) => {
+                let values = al
+                    .arr
+                    .iter()
+                    .map(|elem| self.expression(elem))
+                    .collect::<Result<Vec<_>, _>>()?;
+                Ok(Value::Array(values))
+            }
 
-            ast::Expression::ArrayIndexing(ai) => Ok(ai.iden[ai.idx]),
+            ast::Expression::ArrayIndexing(ai) => {
+                let array = match self.global_var.get(&ai.iden.value) {
+                    Some(Value::Array(arr)) => arr,
+                    Some(other) => {
+                        return Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("cannot index value of type `{:?}`", other),
+                        )
+                        .into());
+                    }
+                    None => {
+                        return Err(RuntimeError::new(
+                            UndefinedVariable,
+                            format!("undefined variable `{}`", ai.iden.value),
+                        )
+                        .into());
+                    }
+                };
+
+                match self.expression(&ai.idx)? {
+                    Value::Int(i) => {
+                        if !(0 <= i && i < array.len() as i64) {
+                            return Err(RuntimeError::new(
+                                InvalidIndex,
+                                "array index out of bounds".to_string(),
+                            )
+                            .into());
+                        }
+
+                        Ok(array[i as usize].clone())
+                    }
+                    _ => Err(RuntimeError::new(
+                        InvalidIndex,
+                        "array index must be an integer".to_string(),
+                    )
+                    .into()),
+                }
+            }
 
             ast::Expression::Identifier(i) => match self.global_var.get(&i.value) {
                 Some(val) => Ok(val.clone()),

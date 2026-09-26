@@ -24,6 +24,17 @@ pub struct Identifier {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct ArrayLiteral {
+    pub arr: Vec<Expression>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ArrayIndexing {
+    pub iden: Identifier,
+    pub idx: Box<Expression>,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum UnaryOperators {
     Add,
     Sub,
@@ -70,6 +81,8 @@ pub enum Expression {
     FloatLiteral(FloatLiteral),
     BooleanLiteral(BooleanLiteral),
     StringLiteral(StringLiteral),
+    ArrayLiteral(ArrayLiteral),
+    ArrayIndexing(ArrayIndexing),
     Identifier(Identifier),
     UnaryOperation(UnaryOperation),
     BinaryOperation(BinaryOperation),
@@ -84,6 +97,13 @@ pub struct DeclareStmt {
 #[derive(Debug, PartialEq)]
 pub struct AssignmentStmt {
     pub iden: Identifier,
+    pub expr: Expression,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct IndexAssignmentStmt {
+    pub iden: Identifier,
+    pub idx: Expression,
     pub expr: Expression,
 }
 
@@ -119,6 +139,7 @@ pub struct WhileStmt {
 pub enum Statement {
     DeclareStmt(DeclareStmt),
     AssignmentStmt(AssignmentStmt),
+    IndexAssignmentStmt(IndexAssignmentStmt),
     DeleteStmt(DeleteStmt),
     InputStmt(InputStmt),
     PrintStmt(PrintStmt),

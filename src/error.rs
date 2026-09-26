@@ -128,6 +128,7 @@ pub enum RuntimeErrorKind {
     UndefinedVariable,
     TypeMismatch,
     DivisionByZero,
+    InvalidIndex,
 }
 
 #[derive(Debug, Clone)]
@@ -148,6 +149,7 @@ impl fmt::Display for RuntimeError {
             RuntimeErrorKind::UndefinedVariable => write!(f, "{}", self.msg),
             RuntimeErrorKind::TypeMismatch => write!(f, "{}", self.msg),
             RuntimeErrorKind::DivisionByZero => write!(f, "{}", self.msg),
+            RuntimeErrorKind::InvalidIndex => write!(f, "{}", self.msg),
         }
     }
 }

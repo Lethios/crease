@@ -145,6 +145,21 @@ impl<'a> Parser<'a> {
     fn assign_stmt(&mut self) -> Result<Statement, Error> {
         let value = self.expect_identifier("expected identifier")?;
 
+        if self.curr_token.kind != TokenKind::Equals {
+            self.expect_token(TokenKind::LBracket, "expected `[`")?;
+            let idx = self.expr()?;
+            self.expect_token(TokenKind::RBracket, "expected `]`")?;
+
+            self.expect_token(TokenKind::Equals, "expected `=`")?;
+            let expr = self.expr()?;
+
+            return Ok(Statement::IndexAssignmentStmt(IndexAssignmentStmt {
+                iden: Identifier { value },
+                idx,
+                expr,
+            }));
+        }
+
         self.expect_token(TokenKind::Equals, "expected `=`")?;
         let expr = self.expr()?;
 
@@ -438,7 +453,21 @@ impl<'a> Parser<'a> {
             TokenKind::StringLiteral(string) => {
                 Ok(Expression::StringLiteral(StringLiteral { string }))
             }
-            TokenKind::Identifier(value) => Ok(Expression::Identifier(Identifier { value })),
+            TokenKind::Identifier(value) => {
+                if self.curr_token.kind != TokenKind::LBracket {
+                    return Ok(Expression::Identifier(Identifier { value }));
+                }
+
+                self.expect_token(TokenKind::LBracket, "expected `[`")?;
+                let expr = self.expr()?;
+                self.expect_token(TokenKind::RBracket, "expected `]`")?;
+
+                Ok(Expression::ArrayIndexing(ArrayIndexing {
+                    iden: Identifier { value },
+                    idx: Box::new(expr),
+                }))
+            }
+            TokenKind::LBracket => Ok(self.array()?),
             TokenKind::LParen => {
                 let res = self.expr()?;
 
@@ -491,5 +520,24 @@ impl<'a> Parser<'a> {
             )
             .into()),
         }
+    }
+
+    fn array(&mut self) -> Result<Expression, Error> {
+        self.expect_token(TokenKind::LBracket, "expected `[`")?;
+
+        let mut arr: Vec<Expression> = Vec::new();
+        if self.curr_token.kind != TokenKind::RBracket {
+            let expr = self.expr()?;
+            arr.push(expr);
+
+            while self.curr_token.kind != TokenKind::RBracket {
+                self.expect_token(TokenKind::Comma, "expected `,`")?;
+                let expr = self.expr()?;
+                arr.push(expr);
+            }
+        }
+        self.expect_token(TokenKind::RBracket, "expected `]`")?;
+
+        Ok(Expression::ArrayLiteral(ArrayLiteral { arr }))
     }
 }

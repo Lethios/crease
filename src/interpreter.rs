@@ -13,6 +13,7 @@ pub enum Value {
     Float(f64),
     Boolean(bool),
     String(std::string::String),
+    Array(Vec<Value>),
 }
 
 #[derive(Default, Debug)]
@@ -57,6 +58,43 @@ impl Interpreter {
                     .into());
                 }
             }
+            ast::Statement::IndexAssignmentStmt(idxassign_stmt) => {
+                let key = &idxassign_stmt.iden.value;
+                let idx = self.expression(&idxassign_stmt.idx)?;
+                let val = self.expression(&idxassign_stmt.expr)?;
+
+                if let Some(array) = self.global_var.get_mut(key) {
+                    match array {
+                        Value::Array(arr) => match idx {
+                            Value::Int(i) => {
+                                if i < 0 {
+                                    return Err(RuntimeError::new(
+                                        InvalidIndex,
+                                        "array index cannot be negative".to_string(),
+                                    )
+                                    .into());
+                                }
+
+                                arr[i as usize] = val;
+                            }
+                            _ => {
+                                return Err(RuntimeError::new(
+                                    InvalidIndex,
+                                    "array index must be an integer".to_string(),
+                                )
+                                .into());
+                            }
+                        },
+                        _ => {
+                            return Err(RuntimeError::new(
+                                TypeMismatch,
+                                format!("cannot index value of type `{:?}`", array),
+                            )
+                            .into());
+                        }
+                    }
+                }
+            }
             ast::Statement::DeleteStmt(delete_stmt) => {
                 let key = &delete_stmt.iden.value;
 
@@ -78,6 +116,7 @@ impl Interpreter {
                     Value::Float(num) => println!("{}", num),
                     Value::Boolean(boolean) => println!("{}", boolean),
                     Value::String(string) => println!("{}", string),
+                    Value::Array(array) => println!("{:?}", array),
                 }
             }
             ast::Statement::IfStmt(if_stmt) => match self.expression(&if_stmt.if_cond)? {
@@ -135,6 +174,10 @@ impl Interpreter {
             ast::Expression::BooleanLiteral(b) => Ok(Value::Boolean(b.boolean)),
 
             ast::Expression::StringLiteral(s) => Ok(Value::String(s.string.clone())),
+
+            ast::Expression::ArrayLiteral(al) => Ok(Value::Array(al.arr)),
+
+            ast::Expression::ArrayIndexing(ai) => Ok(ai.iden[ai.idx]),
 
             ast::Expression::Identifier(i) => match self.global_var.get(&i.value) {
                 Some(val) => Ok(val.clone()),
@@ -233,8 +276,13 @@ impl Interpreter {
                     ast::UnaryOperators::ToStr => match value {
                         Value::Int(num) => Ok(Value::String(num.to_string())),
                         Value::Float(num) => Ok(Value::String(num.to_string())),
-                        Value::String(_) => Ok(value),
                         Value::Boolean(boolean) => Ok(Value::String(boolean.to_string())),
+                        Value::String(_) => Ok(value),
+                        _ => Err(RuntimeError::new(
+                            TypeMismatch,
+                            format!("cannot cast type `{:?}` to string", value),
+                        )
+                        .into()),
                     },
                 }
             }

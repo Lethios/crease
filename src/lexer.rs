@@ -109,6 +109,10 @@ impl<'a> Lexer<'a> {
 
                 b'(' => break Ok(self.construct_token(LParen, start_line, start_col)),
                 b')' => break Ok(self.construct_token(RParen, start_line, start_col)),
+                b'[' => break Ok(self.construct_token(LBracket, start_line, start_col)),
+                b']' => break Ok(self.construct_token(RBracket, start_line, start_col)),
+
+                b',' => break Ok(self.construct_token(Comma, start_line, start_col)),
 
                 b'+' => break Ok(self.construct_token(Plus, start_line, start_col)),
                 b'-' => break Ok(self.construct_token(Minus, start_line, start_col)),
